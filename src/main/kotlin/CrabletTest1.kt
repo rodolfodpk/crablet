@@ -41,13 +41,15 @@ fun main() {
 
     // append events
     eventsAppender.appendIf(eventPayloads, appendCondition)
-        .map {
+        .flatMap {
             // print the resulting sequenceId
-            println(it)
+            println("New sequence id ---> $it")
             // now project a state given the past events
             stateBuilder.buildFor(sq)
         }
-        .onSuccess { println(it) /* print the new state */ }
+        .onSuccess { stateResult: Pair<JsonArray, SequenceNumber> ->
+            println("New state ---> ${stateResult.first.encodePrettily()}")
+        }
         .onFailure { it.printStackTrace() }
 
 }

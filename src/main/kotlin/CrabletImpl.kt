@@ -47,23 +47,21 @@ class CrabletEventsAppender(private val client: Pool) : EventsAppender {
                             val resultSet = resultQuery.result()
                             // Extract the result (last_sequence_id) from the first row
                             val latestSequenceId = resultSet.firstOrNull()?.getLong("last_sequence_id")
-                            connection.close()
                             if (latestSequenceId != null) {
                                 promise.complete(SequenceNumber(latestSequenceId))
                             } else {
                                 promise.fail("No last_sequence_id returned from append_events function")
                             }
                         } else {
-                            connection.close()
                             promise.fail(resultQuery.cause())
                         }
+                        connection.close()
                     }
             } else {
                 promise.fail(ar.cause())
             }
         }
         return promise.future()
-
     }
 
 }
