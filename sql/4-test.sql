@@ -1,5 +1,5 @@
 SELECT append_events(
-               ARRAY ['domain_1', 'domain_2']::TEXT[], -- domain IDs
+               ARRAY ['domain_1@123', 'domain_2@123']::TEXT[], -- domain IDs
                5::BIGINT, -- based sequence ID
                ARRAY ['UserRegistered', 'UserUpdated', 'UserDeleted', 'PasswordChanged', 'UserProfileUpdated']::TEXT[], -- event types
                ARRAY [

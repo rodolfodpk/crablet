@@ -13,12 +13,12 @@ So far, just an experiment
 
  ```bash
 Vertx Pool started
-New sequence id ---> SequenceNumber(value=26)
-Event: 25  {
+New sequence id ---> SequenceNumber(value=12)
+Event: 11  {
   "type" : "AccountOpened",
   "id" : 10
 } = [{"type":"AccountOpened","id":10}]
-Event: 26  {
+Event: 12  {
   "type" : "AmountDeposited",
   "amount" : 10
 } = [{"type":"AccountOpened","id":10},{"type":"AmountDeposited","amount":10}]
