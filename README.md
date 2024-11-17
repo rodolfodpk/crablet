@@ -8,8 +8,9 @@ So far, just an experiment
     ```bash
         docker-compose up 
     ``` 
-   
+
 2. Run the main method of  [`CrabletTest1.kt`](./src/main/kotlin/CrabletTest1.kt)
+
  ```bash
  Vertx Pool started
  SequenceNumber(value=12)

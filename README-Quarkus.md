@@ -57,5 +57,7 @@ If you want to learn more about building native executables, please consult <htt
 
 - Eclipse Vert.x ([guide](https://quarkus.io/guides/vertx)): Write reactive applications with the Vert.x API
 - Kotlin ([guide](https://quarkus.io/guides/kotlin)): Write your services in Kotlin
-- Reactive PostgreSQL client ([guide](https://quarkus.io/guides/reactive-sql-clients)): Connect to the PostgreSQL database using the reactive pattern
-- Reactive Routes ([guide](https://quarkus.io/guides/reactive-routes)): REST framework offering the route model to define non blocking endpoints
+- Reactive PostgreSQL client ([guide](https://quarkus.io/guides/reactive-sql-clients)): Connect to the PostgreSQL
+  database using the reactive pattern
+- Reactive Routes ([guide](https://quarkus.io/guides/reactive-routes)): REST framework offering the route model to
+  define non blocking endpoints
