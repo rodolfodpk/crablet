@@ -12,18 +12,24 @@ So far, just an experiment
 2. Run the main method of  [`CrabletTest1.kt`](./src/main/kotlin/CrabletTest1.kt)
 
  ```bash
- Vertx Pool started
- SequenceNumber(value=12)
- Future{unresolved}
- Event: 11  {
- "type" : "AccountOpened",
- "id" : 10
- } = [{"type":"AccountOpened","id":10}]
- Event: 12  {
- "type" : "AmountDeposited",
- "amount" : 10
- } = [{"type":"AccountOpened","id":10},{"type":"AmountDeposited","amount":10}]
- End of stream    
+Vertx Pool started
+New sequence id ---> SequenceNumber(value=26)
+Event: 25  {
+  "type" : "AccountOpened",
+  "id" : 10
+} = [{"type":"AccountOpened","id":10}]
+Event: 26  {
+  "type" : "AmountDeposited",
+  "amount" : 10
+} = [{"type":"AccountOpened","id":10},{"type":"AmountDeposited","amount":10}]
+New state ---> [ {
+  "type" : "AccountOpened",
+  "id" : 10
+}, {
+  "type" : "AmountDeposited",
+  "amount" : 10
+} ]
+End of stream
  ```
 
 ## References
