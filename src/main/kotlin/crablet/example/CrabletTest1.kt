@@ -1,3 +1,14 @@
+package crablet.example
+
+import crablet.AppendCondition
+import crablet.DomainIdentifier
+import crablet.EventName
+import crablet.SequenceNumber
+import crablet.StateId
+import crablet.StateName
+import crablet.StreamQuery
+import crablet.postgres.CrabletEventsAppender
+import crablet.postgres.CrabletStateBuilder
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.pgclient.PgConnectOptions
@@ -41,7 +52,7 @@ fun main() {
 
     // append events
     eventsAppender.appendIf(eventPayloads, appendCondition)
-        .flatMap {
+        .compose {
             // print the resulting sequenceId
             println("New sequence id ---> $it")
             // now project a state given the past events
