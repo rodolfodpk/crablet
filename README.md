@@ -9,7 +9,7 @@ So far, just an experiment
         docker-compose up 
     ``` 
 
-2. Run the main method of  [`CrabletTest1.kt`](./src/main/kotlin/CrabletTest1.kt)
+2. Run the main method of  [`CrabletTest1.kt`](./src/main/kotlin/crablet/example/CrabletTest1.kt)
 
  ```bash
 Vertx Pool started
