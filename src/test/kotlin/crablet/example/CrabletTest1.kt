@@ -40,26 +40,37 @@ fun main() {
         initialState = JsonArray(),
         evolveFunction = { state, event -> state.add(event) })
 
-    val di = listOf(DomainIdentifier(name = StateName("Account"), id = StateId(UUID.randomUUID().toString())))
-    val sq =
-        StreamQuery(identifiers = di, eventTypes = listOf("AccountOpened", "AmountDeposited").map { EventName(it) })
-    val appendCondition = AppendCondition(query = sq, maximumEventSequence = SequenceNumber(0))
-
-    val eventPayloads: List<JsonObject> = listOf(
-        JsonObject().put("type", "AccountOpened").put("id", 10),
-        JsonObject().put("type", "AmountDeposited").put("amount", 10)
+    val domainIdentifiers = listOf(
+        DomainIdentifier(name = StateName("Account"), id = StateId(UUID.randomUUID().toString()))
     )
 
+    val streamQuery = StreamQuery(
+        identifiers = domainIdentifiers,
+        eventTypes = listOf("AccountOpened", "AmountDeposited").map { EventName(it) }
+    )
+
+    val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
+
+    val eventsToAppend: List<JsonObject> = listOf(
+        JsonObject().put("type", "AccountOpened").put("id", 10),
+        JsonObject().put("type", "AmountDeposited").put("amount", 100)
+    )
+
+    println("Append operation")
+    println("--> eventsToAppend: $eventsToAppend")
+    println("--> appendCondition: $appendCondition ")
+
     // append events
-    eventsAppender.appendIf(eventPayloads, appendCondition)
+    eventsAppender.appendIf(eventsToAppend, appendCondition)
         .compose {
             // print the resulting sequenceId
+            println()
             println("New sequence id ---> $it")
             // now project a state given the past events
-            stateBuilder.buildFor(sq)
+            stateBuilder.buildFor(streamQuery)
         }
         .onSuccess { stateResult: Pair<JsonArray, SequenceNumber> ->
-            println("New state ---> ${stateResult.first.encodePrettily()}")
+            println("New state ---> ${stateResult.first}")
         }
         .onFailure { it.printStackTrace() }
 

@@ -9,27 +9,16 @@ So far, just an experiment
         docker-compose up 
     ``` 
 
-2. Run the main method of  [`CrabletTest1.kt`](./src/main/kotlin/crablet/example/CrabletTest1.kt)
+2. Run the main method of  [`CrabletTest1.kt`](src/test/kotlin/crablet/example/CrabletTest1.kt)
 
- ```bash
+ ```text
 Vertx Pool started
+Append operation
+--> eventsToAppend: [{"type":"AccountOpened","id":10}, {"type":"AmountDeposited","amount":100}]
+--> appendCondition: AppendCondition(query=StreamQuery(identifiers=[DomainIdentifier(name=StateName(value=Account), id=StateId(value=51834a25-31b4-461d-8cfe-cc75a842bbcb))], eventTypes=[EventName(value=AccountOpened), EventName(value=AmountDeposited)]), maximumEventSequence=SequenceNumber(value=0)) 
+
 New sequence id ---> SequenceNumber(value=12)
-Event: 11  {
-  "type" : "AccountOpened",
-  "id" : 10
-} = [{"type":"AccountOpened","id":10}]
-Event: 12  {
-  "type" : "AmountDeposited",
-  "amount" : 10
-} = [{"type":"AccountOpened","id":10},{"type":"AmountDeposited","amount":10}]
-New state ---> [ {
-  "type" : "AccountOpened",
-  "id" : 10
-}, {
-  "type" : "AmountDeposited",
-  "amount" : 10
-} ]
-End of stream
+New state ---> [{"type":"AccountOpened","id":10},{"type":"AmountDeposited","amount":100}]
  ```
 
 ## References

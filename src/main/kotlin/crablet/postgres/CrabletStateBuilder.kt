@@ -3,7 +3,6 @@ package crablet.postgres
 import crablet.SequenceNumber
 import crablet.StateBuilder
 import crablet.StreamQuery
-import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
@@ -11,6 +10,7 @@ import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowStream
 import io.vertx.sqlclient.Tuple
+import org.slf4j.LoggerFactory
 
 class CrabletStateBuilder<S>(
     private val client: Pool,
@@ -46,14 +46,14 @@ class CrabletStateBuilder<S>(
             connection
                 .prepare(sql)
                 .onFailure { promise.fail(it) }
-                .onSuccess { pq ->
+                .onSuccess { preparedStatement ->
                     // Streams require to run within a transaction
                     connection
                         .begin()
                         .onFailure { promise.fail(it) }
                         .onSuccess { tx ->
                             // Fetch pageSize rows at a time
-                            val stream: RowStream<Row> = pq.createStream(pageSize, tuple)
+                            val stream: RowStream<Row> = preparedStatement.createStream(pageSize, tuple)
                             // Use the stream
                             stream.exceptionHandler { err: Throwable ->
                                 error = java.lang.RuntimeException(err)
@@ -68,10 +68,10 @@ class CrabletStateBuilder<S>(
                                 // Close the stream to release the resources in the database
                                 stream
                                     .close()
-                                    .onComplete { closed: AsyncResult<Void?>? ->
+                                    .onComplete {
                                         tx.commit()
-                                            .onComplete { committed: AsyncResult<Void?>? ->
-                                                println("End of stream")
+                                            .onComplete {
+                                                logger.debug("End of stream")
                                             }
                                     }
                             }
@@ -79,12 +79,15 @@ class CrabletStateBuilder<S>(
                                 val jsonObject = row.getJsonObject("event_payload")
                                 lastSequence = row.getLong("sequence_id")
                                 finalState = evolveFunction.invoke(finalState, jsonObject)
-                                println("Event: " + lastSequence + "  " + jsonObject.encodePrettily() + " = " + finalState)
-                                // val jsonObj = JsObj.parse(jsonObject.toBuffer().bytes)
+                                logger.debug("Event: {} -> {}", lastSequence, jsonObject)
                             }
                         }
                 }
         }
         return promise.future()
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(CrabletStateBuilder::class.java)
     }
 }
