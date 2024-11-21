@@ -72,7 +72,7 @@ BEGIN
         RAISE EXCEPTION 'Sequence mismatch: the last sequence from the database does not match the supplied lastSequence parameter.';
     END IF;
 
-    -- Return the causation_id of the last event inserted
-    RETURN causation_id;
+    -- Return the sequence of the last event inserted
+    RETURN currentLastSequence;
 END;
 $$;
