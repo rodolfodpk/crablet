@@ -34,9 +34,3 @@ data class AppendCondition(val query: StreamQuery, val maximumEventSequence: Seq
 interface EventsAppender {
     fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): Future<SequenceNumber>
 }
-
-// json schema validator
-
-interface EventsValidator {
-    fun validate(events: List<JsonObject>)
-}
