@@ -57,7 +57,7 @@ class CrabletStateBuilder<S>(
                             // Use the stream
                             stream.exceptionHandler { err: Throwable ->
                                 error = java.lang.RuntimeException(err)
-                                err.printStackTrace()
+                                logger.error("Stream error", err)
                             }
                             stream.endHandler { v: Void? ->
                                 if (error != null) {
