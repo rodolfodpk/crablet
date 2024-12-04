@@ -46,11 +46,12 @@ BEGIN
 
     -- Ensure the provided _based_sequence_id matches the current sequence or is null (allowing the first insert)
     IF currentLastSequence IS NULL OR currentLastSequence = _based_sequence_id THEN
-        -- Loop through the event types and payloads
-        FOR i IN 1 .. array_length(_event_types, 1)
+        -- Loop through the event payloads
+        FOR i IN 1 .. array_length(_event_payloads, 1)
             LOOP
                 event_payload := _event_payloads[i]::json;
                 event_type := event_payload ->> 'type';
+                -- RAISE NOTICE '----------> will append event_type: %', event_type;
 
                 -- Insert the event into the database with the appropriate causation and correlation IDs
                 INSERT INTO events (event_type, event_payload, domain_ids, causation_id, correlation_id)
