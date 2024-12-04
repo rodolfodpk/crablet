@@ -36,7 +36,7 @@ class CrabletEventsAppender(private val client: Pool) : EventsAppender {
                 .execute(params)
         }.onSuccess { rowSet ->
             // Extract the result (last_sequence_id) from the first row
-            val latestSequenceId = rowSet.firstOrNull()?.getLong("last_sequence_id")
+            val latestSequenceId = rowSet.first().getLong("last_sequence_id")
             if (latestSequenceId != null) {
                 promise.complete(SequenceNumber(latestSequenceId))
             } else {

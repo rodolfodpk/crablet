@@ -9,4 +9,4 @@ SELECT append_events(
                    '{"type": "PasswordChanged", "user_id": "123", "password": "newpassword123"}',
                    '{"type": "UserProfileUpdated", "user_id": "123", "profile": {"age": 30, "city": "New York"}}'
                    ]::TEXT[] -- event payloads (as JSON string)
-       ) AS last_sequence_id;
+       );

@@ -7,38 +7,41 @@ import crablet.SequenceNumber
 import crablet.StateId
 import crablet.StateName
 import crablet.StreamQuery
-import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import io.vertx.pgclient.PgConnectOptions
-import io.vertx.sqlclient.Pool
-import io.vertx.sqlclient.PoolOptions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.*
 
 @ExtendWith(VertxExtension::class)
-class CrabletPostgresTest {
+class Scenario2TestAbstract : AbstractCrabletTest() {
+
+    data class Account(val id: Int? = null, val balance: Int = 0)
 
     lateinit var eventsAppender: CrabletEventsAppender
-    lateinit var stateBuilder: CrabletStateBuilder<JsonArray>
+    lateinit var stateBuilder: CrabletStateBuilder<Account>
     lateinit var appendCondition: AppendCondition
     lateinit var eventsToAppend: List<JsonObject>
     lateinit var streamQuery: StreamQuery
 
     @BeforeEach
     fun setUp(testContext: VertxTestContext) {
-        val pool = createPool()
         eventsAppender = CrabletEventsAppender(pool)
         stateBuilder = CrabletStateBuilder(
             client = pool,
-            initialState = JsonArray(),
-            evolveFunction = { state, event -> state.add(event) })
+            initialState = Account(),
+            evolveFunction = { state, event ->
+                when (event.getString("type")) {
+                    "AccountOpened" -> state.copy(id = event.getInteger("id"))
+                    "AmountDeposited" -> state.copy(balance = state.balance.plus(event.getInteger("amount")))
+                    else -> state
+                }
+            })
+
         val domainIdentifiers = listOf(
             DomainIdentifier(name = StateName("Account"), id = StateId(UUID.randomUUID().toString()))
         )
@@ -61,18 +64,13 @@ class CrabletPostgresTest {
             .compose {
                 stateBuilder.buildFor(streamQuery)
             }
-            .onSuccess { stateResult: Pair<JsonArray, SequenceNumber> ->
-                // Verify that the Pair object is not null
-                assertNotNull(stateResult)
+            .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
 
-                // Verify that the JsonArray contains the expected events
-                assertNotNull(stateResult.first)
-                assertEquals(2, stateResult.first.size())
-                assertTrue(stateResult.first.contains(JsonObject().put("type", "AccountOpened").put("id", 10)))
-                assertTrue(stateResult.first.contains(JsonObject().put("type", "AmountDeposited").put("amount", 100)))
+                assertNotNull(state)
+                assertNotNull(sequence)
 
-                // Verify that the SequenceNumber is not null
-                assertNotNull(stateResult.second)
+                assertEquals(state.id, 10)
+                assertEquals(state.balance, 100)
 
                 // Complete the test context indicating the test passed
                 testContext.completeNow()
@@ -83,14 +81,4 @@ class CrabletPostgresTest {
             }
     }
 
-    private fun createPool(): Pool {
-        val connectOptions = PgConnectOptions()
-            .setPort(5432)
-            .setHost("127.0.0.1")
-            .setDatabase("postgres")
-            .setUser("postgres")
-            .setPassword("postgres")
-        val poolOptions = PoolOptions().setMaxSize(5)
-        return Pool.pool(connectOptions, poolOptions)
-    }
 }

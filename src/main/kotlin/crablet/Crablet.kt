@@ -21,16 +21,16 @@ data class DomainIdentifier(val name: StateName, val id: StateId) {
 
 data class StreamQuery(val identifiers: List<DomainIdentifier>, val eventTypes: List<EventName>)
 
-// read
-
-interface StateBuilder<S> {
-    fun buildFor(query: StreamQuery): Future<Pair<S, SequenceNumber>>
-}
-
 // write
 
 data class AppendCondition(val query: StreamQuery, val maximumEventSequence: SequenceNumber)
 
 interface EventsAppender {
     fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): Future<SequenceNumber>
+}
+
+// read
+
+interface StateBuilder<S> {
+    fun buildFor(query: StreamQuery): Future<Pair<S, SequenceNumber>>
 }

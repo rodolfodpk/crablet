@@ -66,6 +66,8 @@ BEGIN
                 -- After the first insert, set causation_id to the sequence_id of the last event inserted
                 causation_id := sequence_id;
 
+                currentLastSequence = sequence_id;
+
             END LOOP;
     ELSE
         -- Raise an exception if sequence mismatch is detected
