@@ -22,10 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountTransferScenarioTest : AbstractCrabletTest() {
 
-    data class Account(val id: String? = null, val balance: Int = 0)
-
-    val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
-
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`(testContext: VertxTestContext) {
@@ -133,11 +129,11 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             }
             .compose {
                 // assert acct2 state
-                val domainIdentifiersAcct1 = listOf(
+                val domainIdentifiersAcct2 = listOf(
                     DomainIdentifier(name = StateName("Account"), id = StateId("2"))
                 )
-                val streamQueryAcct1 = StreamQuery(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
-                stateBuilder.buildFor(streamQueryAcct1)
+                val streamQueryAcct2 = StreamQuery(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
+                stateBuilder.buildFor(streamQueryAcct2)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
                             assertEquals(5, sequence.value)
@@ -157,11 +153,11 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     companion object {
         lateinit var eventsAppender: CrabletEventsAppender
         lateinit var stateBuilder: CrabletStateBuilder<Account>
-
+        data class Account(val id: String? = null, val balance: Int = 0)
+        val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
         @BeforeAll
         @JvmStatic
         fun setUp(testContext: VertxTestContext) {
-            cleanDatabase()
             eventsAppender = CrabletEventsAppender(pool)
             stateBuilder = CrabletStateBuilder(
                 client = pool,
@@ -177,7 +173,6 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                                         event.getInteger("amount")
                                     )
                                 )
-
                                 event.getString("toAcct") == state.id -> state.copy(
                                     balance = state.balance.plus(
                                         event.getInteger(
@@ -185,15 +180,13 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                                         )
                                     )
                                 )
-
                                 else -> state
                             }
                         }
-
                         else -> state
                     }
                 })
-            testContext.completeNow()
+            cleanDatabase().onSuccess { testContext.completeNow() }
         }
     }
 
