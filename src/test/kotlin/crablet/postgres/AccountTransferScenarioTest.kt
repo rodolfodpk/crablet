@@ -177,6 +177,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                                         event.getInteger("amount")
                                     )
                                 )
+
                                 event.getString("toAcct") == state.id -> state.copy(
                                     balance = state.balance.plus(
                                         event.getInteger(
@@ -184,9 +185,11 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                                         )
                                     )
                                 )
+
                                 else -> state
                             }
                         }
+
                         else -> state
                     }
                 })

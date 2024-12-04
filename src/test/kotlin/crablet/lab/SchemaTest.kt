@@ -1,13 +1,13 @@
-package crablet.example
+package crablet.lab
 
-import crablet.example.CustomerEvents.CUSTOMER_ACTIVATED
-import crablet.example.CustomerEvents.CUSTOMER_DEACTIVATED
-import crablet.example.CustomerEvents.CUSTOMER_REGISTERED
-import crablet.example.CustomerEvents.CUSTOMER_RENAMED
-import crablet.example.CustomerEventsFields.ID
-import crablet.example.CustomerEventsFields.NAME
-import crablet.example.CustomerEventsFields.REASON
-import crablet.example.CustomerEventsFields.TYPE
+import crablet.lab.CustomerEvents.CUSTOMER_ACTIVATED
+import crablet.lab.CustomerEvents.CUSTOMER_DEACTIVATED
+import crablet.lab.CustomerEvents.CUSTOMER_REGISTERED
+import crablet.lab.CustomerEvents.CUSTOMER_RENAMED
+import crablet.lab.CustomerEventsFields.ID
+import crablet.lab.CustomerEventsFields.NAME
+import crablet.lab.CustomerEventsFields.REASON
+import crablet.lab.CustomerEventsFields.TYPE
 import `fun`.gen.Gen
 
 import io.vertx.core.json.JsonObject
