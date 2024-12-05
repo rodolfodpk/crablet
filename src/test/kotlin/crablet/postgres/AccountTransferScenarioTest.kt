@@ -342,8 +342,11 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     companion object {
         lateinit var eventsAppender: CrabletEventsAppender
         lateinit var stateBuilder: CrabletStateBuilder<Account>
+
         data class Account(val id: String? = null, val balance: Int = 0)
+
         val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
+
         @BeforeAll
         @JvmStatic
         fun setUp(testContext: VertxTestContext) {
@@ -362,6 +365,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                                         event.getInteger("amount")
                                     )
                                 )
+
                                 event.getString("toAcct") == state.id -> state.copy(
                                     balance = state.balance.plus(
                                         event.getInteger(
@@ -369,9 +373,11 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                                         )
                                     )
                                 )
+
                                 else -> state
                             }
                         }
+
                         else -> state
                     }
                 })
