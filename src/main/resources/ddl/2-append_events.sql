@@ -38,7 +38,11 @@ BEGIN
         correlation_id := NULL; -- Correlation will be set after the first insert
     ELSE
         causation_id := currentLastSequence; -- For subsequent events, causation_id points to the previous event's sequence_id
-        correlation_id := previousEventRow.correlation_id; -- Same correlation_id as the last event
+        IF previousEventRow.correlation_id IS NULL THEN
+            correlation_id := causation_id;
+        ELSE
+            correlation_id := previousEventRow.correlation_id; -- Same correlation_id as the last event
+        END IF;
     END IF;
 
     -- Lock the transaction using the correlation_id to prevent conflicts
