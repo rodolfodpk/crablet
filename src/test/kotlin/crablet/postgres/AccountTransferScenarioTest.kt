@@ -277,7 +277,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     }
 
     @Test
-    @Order(5)
+    @Order(6)
     fun `it can transfer $1 from Account 1 to Account 2 within the same db transaction`(testContext: VertxTestContext) {
         val domainIdentifiers = listOf(
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
