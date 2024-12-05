@@ -59,7 +59,7 @@ class CrabletStateBuilder<S>(
                                 error = java.lang.RuntimeException(err)
                                 logger.error("Stream error", err)
                             }
-                            stream.endHandler { v: Void? ->
+                            stream.endHandler {
                                 if (error != null) {
                                     promise.fail(error)
                                 } else {

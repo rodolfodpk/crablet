@@ -25,11 +25,8 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`(testContext: VertxTestContext) {
-        val domainIdentifiers = listOf(
-            DomainIdentifier(name = StateName("Account"), id = StateId("1"))
-        )
         val streamQuery = StreamQuery(
-            identifiers = domainIdentifiers,
+            identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
         )
         val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
@@ -61,11 +58,8 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     @Test
     @Order(2)
     fun `it can open Account 2  with $0`(testContext: VertxTestContext) {
-        val domainIdentifiers = listOf(
-            DomainIdentifier(name = StateName("Account"), id = StateId("2"))
-        )
         val streamQuery = StreamQuery(
-            identifiers = domainIdentifiers,
+            identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
             eventTypes = eventTypes
         )
         val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
@@ -126,6 +120,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                             assertEquals(70, state.balance)
                         }
                     }
+                    .onFailure {
+                        testContext.failNow(it)
+                    }
             }
             .compose {
                 // assert acct2 state
@@ -140,6 +137,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                             assertEquals("2", state.id)
                             assertEquals(30, state.balance)
                         }
+                    }
+                    .onFailure {
+                        testContext.failNow(it)
                     }
             }
             .onSuccess {
