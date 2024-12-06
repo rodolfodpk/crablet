@@ -21,9 +21,9 @@ data class DomainIdentifier(val name: StateName, val id: StateId) {
 
 data class StreamQuery(val identifiers: List<DomainIdentifier>, val eventTypes: List<EventName>)
 
-// write
-
 data class AppendCondition(val query: StreamQuery, val maximumEventSequence: SequenceNumber)
+
+// write
 
 interface EventsAppender {
     fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): Future<SequenceNumber>

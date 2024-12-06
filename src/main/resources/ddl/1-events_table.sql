@@ -18,6 +18,6 @@ CREATE TABLE events
 
 CREATE INDEX domain_ids_gin_index ON events USING gin (domain_ids);
 
-CREATE INDEX idx_events_event_type ON events(event_type);
+CREATE INDEX idx_events_event_type ON events (event_type);
 
-CREATE INDEX idx_events_correlation_id ON events(correlation_id);
+CREATE INDEX idx_events_correlation_id ON events (correlation_id);

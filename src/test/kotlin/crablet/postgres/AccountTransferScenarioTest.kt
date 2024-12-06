@@ -7,10 +7,12 @@ import crablet.SequenceNumber
 import crablet.StateId
 import crablet.StateName
 import crablet.StreamQuery
+import io.kotest.matchers.ints.shouldBeExactly
+import io.kotest.matchers.longs.shouldBeExactly
+import io.kotest.matchers.shouldBe
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -31,7 +33,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         )
         val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
         val eventsToAppend = listOf(
-            JsonObject().put("type", "AccountOpened").put("id", "1"),
+            JsonObject().put("type", "AccountOpened").put("id", 1),
             JsonObject().put("type", "AmountDeposited").put("amount", 100)
         )
         eventsAppender.appendIf(eventsToAppend, appendCondition)
@@ -43,9 +45,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             }
             .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
                 testContext.verify {
-                    assertEquals(2, sequence.value)
-                    assertEquals("1", state.id)
-                    assertEquals(100, state.balance)
+                    sequence.value shouldBeExactly 2L
+                    state.id shouldBe 1
+                    state.balance shouldBeExactly 100
                 }
                 testContext.completeNow()
             }
@@ -64,8 +66,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         )
         val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
         val eventsToAppend = listOf(
-            JsonObject().put("type", "AccountOpened").put("id", "2"),
-            JsonObject().put("type", "AmountDeposited").put("amount", 0)
+            JsonObject().put("type", "AccountOpened").put("id", 2)
         )
         eventsAppender.appendIf(eventsToAppend, appendCondition)
             .compose {
@@ -76,9 +77,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             }
             .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
                 testContext.verify {
-                    assertEquals(4, sequence.value)
-                    assertEquals("2", state.id)
-                    assertEquals(0, state.balance)
+                    sequence.value shouldBeExactly 3L
+                    state.id shouldBe 2
+                    state.balance shouldBeExactly 0
                 }
                 testContext.completeNow()
             }
@@ -98,7 +99,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             identifiers = domainIdentifiers,
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(4))
+        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(3))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 1).put("toAcct", 2).put("amount", 30)
         )
@@ -115,9 +116,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 stateBuilder.buildFor(streamQueryAcct1)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
-                            assertEquals(5, sequence.value)
-                            assertEquals("1", state.id)
-                            assertEquals(70, state.balance)
+                            sequence.value shouldBeExactly 4L
+                            state.id shouldBe 1
+                            state.balance shouldBeExactly 70
                         }
                     }
                     .onFailure {
@@ -133,9 +134,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 stateBuilder.buildFor(streamQueryAcct2)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
-                            assertEquals(5, sequence.value)
-                            assertEquals("2", state.id)
-                            assertEquals(30, state.balance)
+                            sequence.value shouldBeExactly 4L
+                            state.id shouldBe 2
+                            state.balance shouldBeExactly 30
                         }
                     }
                     .onFailure {
@@ -161,7 +162,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             identifiers = domainIdentifiers,
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(5))
+        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(4))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 2).put("toAcct", 1).put("amount", 10)
         )
@@ -178,9 +179,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 stateBuilder.buildFor(streamQueryAcct1)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
-                            assertEquals(6, sequence.value)
-                            assertEquals("1", state.id)
-                            assertEquals(80, state.balance)
+                            sequence.value shouldBeExactly 5L
+                            state.id shouldBe 1
+                            state.balance shouldBeExactly 80
                         }
                     }
                     .onFailure {
@@ -196,9 +197,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 stateBuilder.buildFor(streamQueryAcct2)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
-                            assertEquals(6, sequence.value)
-                            assertEquals("2", state.id)
-                            assertEquals(20, state.balance)
+                            sequence.value shouldBeExactly 5L
+                            state.id shouldBe 2
+                            state.balance shouldBeExactly 20
                         }
                     }
                     .onFailure {
@@ -224,7 +225,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             identifiers = domainIdentifiers,
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(6))
+        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(5))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 2).put("toAcct", 1).put("amount", 1)
         )
@@ -241,9 +242,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 stateBuilder.buildFor(streamQueryAcct1)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
-                            assertEquals(7, sequence.value)
-                            assertEquals("1", state.id)
-                            assertEquals(81, state.balance)
+                            sequence.value shouldBeExactly 6L
+                            state.id shouldBe 1
+                            state.balance shouldBeExactly 81
                         }
                     }
                     .onFailure {
@@ -259,9 +260,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 stateBuilder.buildFor(streamQueryAcct2)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
-                            assertEquals(7, sequence.value)
-                            assertEquals("2", state.id)
-                            assertEquals(19, state.balance)
+                            sequence.value shouldBeExactly 6L
+                            state.id shouldBe 2
+                            state.balance shouldBeExactly 19
                         }
                     }
                     .onFailure {
@@ -287,7 +288,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             identifiers = domainIdentifiers,
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(7))
+        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(6))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 1).put("toAcct", 2).put("amount", 1)
         )
@@ -304,9 +305,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 stateBuilder.buildFor(streamQueryAcct1)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
-                            assertEquals(8, sequence.value)
-                            assertEquals("1", state.id)
-                            assertEquals(80, state.balance)
+                            sequence.value shouldBeExactly 7L
+                            state.id shouldBe 1
+                            state.balance shouldBeExactly 80
                         }
                     }
                     .onFailure {
@@ -322,9 +323,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 stateBuilder.buildFor(streamQueryAcct2)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
-                            assertEquals(8, sequence.value)
-                            assertEquals("2", state.id)
-                            assertEquals(20, state.balance)
+                            sequence.value shouldBeExactly 7L
+                            state.id shouldBe 2
+                            state.balance shouldBeExactly 20
                         }
                     }
                     .onFailure {
@@ -343,7 +344,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         lateinit var eventsAppender: CrabletEventsAppender
         lateinit var stateBuilder: CrabletStateBuilder<Account>
 
-        data class Account(val id: String? = null, val balance: Int = 0)
+        data class Account(val id: Int? = null, val balance: Int = 0)
 
         val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
 
@@ -356,17 +357,17 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 initialState = Account(),
                 evolveFunction = { state, event ->
                     when (event.getString("type")) {
-                        "AccountOpened" -> state.copy(id = event.getString("id"))
+                        "AccountOpened" -> state.copy(id = event.getInteger("id"))
                         "AmountDeposited" -> state.copy(balance = state.balance.plus(event.getInteger("amount")))
                         "AmountTransferred" -> {
                             when {
-                                event.getString("fromAcct") == state.id -> state.copy(
+                                event.getInteger("fromAcct") == state.id -> state.copy(
                                     balance = state.balance.minus(
                                         event.getInteger("amount")
                                     )
                                 )
 
-                                event.getString("toAcct") == state.id -> state.copy(
+                                event.getInteger("toAcct") == state.id -> state.copy(
                                     balance = state.balance.plus(
                                         event.getInteger(
                                             "amount"

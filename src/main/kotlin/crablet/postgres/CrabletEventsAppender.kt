@@ -35,10 +35,9 @@ class CrabletEventsAppender(private val client: Pool) : EventsAppender {
             connection.preparedQuery(functionCall)
                 .execute(params)
         }.onSuccess { rowSet ->
-            // Extract the result (last_sequence_id) from the first row
-            val latestSequenceId = rowSet.first().getLong("last_sequence_id")
-            if (latestSequenceId != null) {
-                promise.complete(SequenceNumber(latestSequenceId))
+            if (rowSet.rowCount() == 1 && rowSet.first().getLong("last_sequence_id") != null) {
+                // Extract the result (last_sequence_id) from the first row
+                promise.complete(SequenceNumber(rowSet.first().getLong("last_sequence_id")))
             } else {
                 promise.fail("No last_sequence_id returned from append_events function")
             }
