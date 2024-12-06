@@ -348,6 +348,28 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
 
         val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
 
+        private val evolveFunction: (Account, JsonObject) -> Account = { state, event ->
+            when (event.getString("type")) {
+                "AccountOpened" -> state.copy(id = event.getInteger("id"))
+                "AmountDeposited" -> state.copy(balance = state.balance.plus(event.getInteger("amount")))
+                "AmountTransferred" -> {
+                    when {
+                        event.getInteger("fromAcct") == state.id -> state.copy(
+                            balance = state.balance.minus(event.getInteger("amount"))
+                        )
+
+                        event.getInteger("toAcct") == state.id -> state.copy(
+                            balance = state.balance.plus(event.getInteger("amount"))
+                        )
+
+                        else -> state
+                    }
+                }
+
+                else -> state
+            }
+        }
+
         @BeforeAll
         @JvmStatic
         fun setUp(testContext: VertxTestContext) {
@@ -355,33 +377,8 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             stateBuilder = CrabletStateBuilder(
                 client = pool,
                 initialState = Account(),
-                evolveFunction = { state, event ->
-                    when (event.getString("type")) {
-                        "AccountOpened" -> state.copy(id = event.getInteger("id"))
-                        "AmountDeposited" -> state.copy(balance = state.balance.plus(event.getInteger("amount")))
-                        "AmountTransferred" -> {
-                            when {
-                                event.getInteger("fromAcct") == state.id -> state.copy(
-                                    balance = state.balance.minus(
-                                        event.getInteger("amount")
-                                    )
-                                )
-
-                                event.getInteger("toAcct") == state.id -> state.copy(
-                                    balance = state.balance.plus(
-                                        event.getInteger(
-                                            "amount"
-                                        )
-                                    )
-                                )
-
-                                else -> state
-                            }
-                        }
-
-                        else -> state
-                    }
-                })
+                evolveFunction = evolveFunction
+            )
             cleanDatabase().onSuccess { testContext.completeNow() }
         }
     }
