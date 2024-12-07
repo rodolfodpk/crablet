@@ -340,6 +340,48 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             }
     }
 
+    @Test
+    @Order(7)
+    fun `Account 1 state is correct`(testContext: VertxTestContext) {
+        val streamQuery = StreamQuery(
+            identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
+            eventTypes = eventTypes
+        )
+        stateBuilder.buildFor(streamQuery)
+            .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
+                testContext.verify {
+                    sequence.value shouldBeExactly 7L
+                    state.id shouldBe 1
+                    state.balance shouldBeExactly 80
+                }
+                testContext.completeNow()
+            }
+            .onFailure { it ->
+                testContext.failNow(it)
+            }
+    }
+
+    @Test
+    @Order(8)
+    fun `Account 2 state is correct`(testContext: VertxTestContext) {
+        val streamQuery = StreamQuery(
+            identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
+            eventTypes = eventTypes
+        )
+        stateBuilder.buildFor(streamQuery)
+            .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
+                testContext.verify {
+                    sequence.value shouldBeExactly 7L
+                    state.id shouldBe 2
+                    state.balance shouldBeExactly 20
+                }
+                testContext.completeNow()
+            }
+            .onFailure { it ->
+                testContext.failNow(it)
+            }
+    }
+
     companion object {
         lateinit var eventsAppender: CrabletEventsAppender
         lateinit var stateBuilder: CrabletStateBuilder<Account>
