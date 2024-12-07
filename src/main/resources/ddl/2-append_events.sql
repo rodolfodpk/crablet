@@ -21,7 +21,7 @@ BEGIN
     SELECT ARRAY(SELECT UNNEST(_domain_ids) ORDER BY 1) INTO _domain_ids;
 
     -- Fetch the row with the max sequence number from the events table
-    SELECT *
+    SELECT e.sequence_id, e.correlation_id
     INTO previousEventRow
     FROM events e
     WHERE e.sequence_id = (SELECT max(e2.sequence_id)
