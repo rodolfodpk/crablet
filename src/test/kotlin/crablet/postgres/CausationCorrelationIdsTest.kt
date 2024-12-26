@@ -25,7 +25,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
 
     @Test
     @Order(1)
-    fun `it can open Account 1 with $100`(testContext: VertxTestContext) {
+    fun `it can open Account 1 with correct IDs`(testContext: VertxTestContext) {
         val testRepository = TestRepository(pool)
 
         val streamQuery = StreamQuery(
@@ -35,9 +35,9 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
         val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AccountOpened").put("id", 1),
-            JsonObject().put("type", "AmountDeposited").put("amount", 50),
-            JsonObject().put("type", "AmountDeposited").put("amount", 50),
-            JsonObject().put("type", "AmountDeposited").put("amount", 50)
+            JsonObject().put("type", "AmountDeposited").put("amount", 10),
+            JsonObject().put("type", "AmountDeposited").put("amount", 20),
+            JsonObject().put("type", "AmountDeposited").put("amount", 30)
         )
         eventsAppender.appendIf(eventsToAppend, appendCondition)
             .compose {
@@ -55,6 +55,55 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
                         Triple(4L, 3L, 1L)
                     )
                     expectedResults.size shouldBeExactly ids.size
+                    ids.forEachIndexed { index, triple ->
+                        triple shouldBeEqual expectedResults[index]
+                    }
+                }
+                testContext.completeNow()
+            }
+            .onFailure { it ->
+                testContext.failNow(it)
+            }
+
+    }
+
+    @Test
+    @Order(2)
+    fun `it can open Account 2  with correct IDs`(testContext: VertxTestContext) {
+        val testRepository = TestRepository(pool)
+
+        val streamQuery = StreamQuery(
+            identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
+            eventTypes = eventTypes
+        )
+        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
+        val eventsToAppend = listOf(
+            JsonObject().put("type", "AccountOpened").put("id", 2),
+            JsonObject().put("type", "AmountDeposited").put("amount", 10),
+            JsonObject().put("type", "AmountDeposited").put("amount", 20),
+            JsonObject().put("type", "AmountDeposited").put("amount", 30)
+        )
+        eventsAppender.appendIf(eventsToAppend, appendCondition)
+            .compose {
+                dumpEvents()
+            }
+            .compose {
+                testRepository.getSequences()
+            }
+            .onSuccess { ids ->
+                testContext.verify {
+                    val expectedResults = listOf(
+                        Triple(1L, 1L, 1L),
+                        Triple(2L, 1L, 1L),
+                        Triple(3L, 2L, 1L),
+                        Triple(4L, 3L, 1L),
+
+                        Triple(5L, 5L, 5L),
+                        Triple(6L, 5L, 5L),
+                        Triple(7L, 6L, 5L),
+                        Triple(8L, 7L, 5L)
+                    )
+                    expectedResults.size shouldBeExactly (ids.size)
                     ids.forEachIndexed { index, triple ->
                         triple shouldBeEqual expectedResults[index]
                     }
