@@ -51,6 +51,7 @@ abstract class AbstractCrabletTest {
         }
 
         fun cleanDatabase(): Future<Void> {
+            println("Cleaning database -------------")
             return pool.query("TRUNCATE TABLE events").execute()
                 .compose {
                     pool.query("ALTER SEQUENCE events_sequence_id_seq RESTART WITH 1").execute()

@@ -115,10 +115,11 @@ fun main() {
         val event = sample.random()
 
         println("Customer event type " + event.toJson().getStr(JsPath.path("/type")))
+        println("Customer event type " + event.toJson().getStr(JsPath.path("/type")))
         println("Customer event name " + event.toJson().getStr(JsPath.path("/name"))) // can be null
 
     }
 
-    test1()
+    test2()
 
 }

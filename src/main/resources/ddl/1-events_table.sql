@@ -2,14 +2,19 @@
 
 -- TODO
 -- https://dev.to/aws-heroes/scalable-sequence-for-postgresql-34o7
+-- https://aws.amazon.com/blogs/database/implement-uuidv7-in-amazon-rds-for-postgresql-using-trusted-language-extensions/
 -- https://theburningmonk.com/2024/11/eventbridge-best-practice-why-you-should-wrap-events-in-event-envelopes/
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE SEQUENCE events_sequence_id_seq minvalue 1 start with 1 cache 10;
 
 CREATE TABLE events
 (
-    sequence_id    BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    sequence_id    BIGINT PRIMARY KEY                     NOT NULL,
     event_type     VARCHAR(100)                           NOT NULL,
     event_payload  JSON                                   NOT NULL,
-    domain_ids     text[]                                 NOT NULL,
+    domain_ids     TEXT[]                                 NOT NULL,
     causation_id   BIGINT REFERENCES events (sequence_id),
     correlation_id BIGINT REFERENCES events (sequence_id),
     created_at     TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
