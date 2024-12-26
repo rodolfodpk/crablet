@@ -5,8 +5,6 @@
 -- https://aws.amazon.com/blogs/database/implement-uuidv7-in-amazon-rds-for-postgresql-using-trusted-language-extensions/
 -- https://theburningmonk.com/2024/11/eventbridge-best-practice-why-you-should-wrap-events-in-event-envelopes/
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 CREATE SEQUENCE events_sequence_id_seq minvalue 1 start with 1 cache 10;
 
 CREATE TABLE events
