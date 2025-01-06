@@ -79,7 +79,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             .onFailure {
                 testContext.verify {
                     it.message shouldContain
-                            "Sequence mismatch: the last sequence from the database does not match the expected sequence id parameter: 2"
+                            "Sequence mismatch: the current last sequence 3 from the database does not match the expected sequence: 2."
                 }
                 testContext.completeNow()
             }

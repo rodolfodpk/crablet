@@ -62,7 +62,7 @@ BEGIN
             END LOOP;
     ELSE
         -- Raise an exception if sequence mismatch is detected
-        RAISE EXCEPTION 'Sequence mismatch: the last sequence from the database does not match the expected sequence id parameter: %.', _expected_sequence_id;
+        RAISE EXCEPTION 'Sequence mismatch: the current last sequence % from the database does not match the expected sequence: %.', _lastEventSequenceId, _expected_sequence_id;
     END IF;
 
     -- Return the sequence of the last event inserted
