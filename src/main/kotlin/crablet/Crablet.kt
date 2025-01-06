@@ -19,9 +19,9 @@ data class DomainIdentifier(val name: StateName, val id: StateId) {
     fun toStorageFormat(): String = this.name.value.plus("@").plus(this.id.value)
 }
 
-data class StreamQuery(val identifiers: List<DomainIdentifier>, val eventTypes: List<EventName>)
+data class TransactionContext(val identifiers: List<DomainIdentifier>, val eventTypes: List<EventName>)
 
-data class AppendCondition(val query: StreamQuery, val maximumEventSequence: SequenceNumber)
+data class AppendCondition(val transactionContext: TransactionContext, val expectedCurrentSequence: SequenceNumber)
 
 // write
 
@@ -32,5 +32,6 @@ interface EventsAppender {
 // read
 
 interface StateBuilder<S> {
-    fun buildFor(query: StreamQuery): Future<Pair<S, SequenceNumber>>
+    fun buildFor(transactionContext: TransactionContext): Future<Pair<S, SequenceNumber>>
 }
+

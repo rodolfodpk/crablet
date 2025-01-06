@@ -6,7 +6,7 @@ import crablet.EventName
 import crablet.SequenceNumber
 import crablet.StateId
 import crablet.StateName
-import crablet.StreamQuery
+import crablet.TransactionContext
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.ints.shouldBeExactly
 import io.vertx.core.json.JsonObject
@@ -28,11 +28,12 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
     fun `it can open Account 1 with correct IDs`(testContext: VertxTestContext) {
         val testRepository = TestRepository(pool)
 
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
+        val appendCondition =
+            AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(0))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AccountOpened").put("id", 1),
             JsonObject().put("type", "AmountDeposited").put("amount", 10),
@@ -72,11 +73,12 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
     fun `it can open Account 2  with correct IDs`(testContext: VertxTestContext) {
         val testRepository = TestRepository(pool)
 
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
+        val appendCondition =
+            AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(0))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AccountOpened").put("id", 2),
             JsonObject().put("type", "AmountDeposited").put("amount", 10),

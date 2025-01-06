@@ -6,7 +6,7 @@ import crablet.EventName
 import crablet.SequenceNumber
 import crablet.StateId
 import crablet.StateName
-import crablet.StreamQuery
+import crablet.TransactionContext
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
@@ -27,11 +27,12 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`(testContext: VertxTestContext) {
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
+        val appendCondition =
+            AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(0))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AccountOpened").put("id", 1),
             JsonObject().put("type", "AmountDeposited").put("amount", 50),
@@ -42,7 +43,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 dumpEvents()
             }
             .compose {
-                stateBuilder.buildFor(streamQuery)
+                stateBuilder.buildFor(transactionContext)
             }
             .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
                 testContext.verify {
@@ -61,11 +62,12 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     @Test
     @Order(2)
     fun `it can open Account 2  with $0`(testContext: VertxTestContext) {
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(0))
+        val appendCondition =
+            AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(0))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AccountOpened").put("id", 2)
         )
@@ -74,7 +76,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 dumpEvents()
             }
             .compose {
-                stateBuilder.buildFor(streamQuery)
+                stateBuilder.buildFor(transactionContext)
             }
             .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
                 testContext.verify {
@@ -96,11 +98,12 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
         )
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = domainIdentifiers,
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(3))
+        val appendCondition =
+            AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(3))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 1).put("toAcct", 2).put("amount", 30)
         )
@@ -113,8 +116,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 val domainIdentifiersAcct1 = listOf(
                     DomainIdentifier(name = StateName("Account"), id = StateId("1"))
                 )
-                val streamQueryAcct1 = StreamQuery(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
-                stateBuilder.buildFor(streamQueryAcct1)
+                val transactionContextAcct1 =
+                    TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
+                stateBuilder.buildFor(transactionContextAcct1)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
                             sequence.value shouldBeExactly 5L
@@ -131,8 +135,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 val domainIdentifiersAcct2 = listOf(
                     DomainIdentifier(name = StateName("Account"), id = StateId("2"))
                 )
-                val streamQueryAcct2 = StreamQuery(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
-                stateBuilder.buildFor(streamQueryAcct2)
+                val transactionContextAcct2 =
+                    TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
+                stateBuilder.buildFor(transactionContextAcct2)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
                             sequence.value shouldBeExactly 5L
@@ -159,11 +164,12 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
         )
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = domainIdentifiers,
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(5))
+        val appendCondition =
+            AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(5))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 2).put("toAcct", 1).put("amount", 10)
         )
@@ -176,8 +182,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 val domainIdentifiersAcct1 = listOf(
                     DomainIdentifier(name = StateName("Account"), id = StateId("1"))
                 )
-                val streamQueryAcct1 = StreamQuery(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
-                stateBuilder.buildFor(streamQueryAcct1)
+                val transactionContextAcct1 =
+                    TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
+                stateBuilder.buildFor(transactionContextAcct1)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
                             sequence.value shouldBeExactly 6L
@@ -194,8 +201,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 val domainIdentifiersAcct2 = listOf(
                     DomainIdentifier(name = StateName("Account"), id = StateId("2"))
                 )
-                val streamQueryAcct2 = StreamQuery(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
-                stateBuilder.buildFor(streamQueryAcct2)
+                val transactionContextAcct2 =
+                    TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
+                stateBuilder.buildFor(transactionContextAcct2)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
                             sequence.value shouldBeExactly 6L
@@ -222,11 +230,12 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
         )
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = domainIdentifiers,
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(6))
+        val appendCondition =
+            AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(6))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 2).put("toAcct", 1).put("amount", 1)
         )
@@ -239,8 +248,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 val domainIdentifiersAcct1 = listOf(
                     DomainIdentifier(name = StateName("Account"), id = StateId("1"))
                 )
-                val streamQueryAcct1 = StreamQuery(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
-                stateBuilder.buildFor(streamQueryAcct1)
+                val transactionContextAcct1 =
+                    TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
+                stateBuilder.buildFor(transactionContextAcct1)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
                             sequence.value shouldBeExactly 7L
@@ -257,8 +267,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 val domainIdentifiersAcct2 = listOf(
                     DomainIdentifier(name = StateName("Account"), id = StateId("2"))
                 )
-                val streamQueryAcct2 = StreamQuery(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
-                stateBuilder.buildFor(streamQueryAcct2)
+                val transactionContextAcct2 =
+                    TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
+                stateBuilder.buildFor(transactionContextAcct2)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
                             sequence.value shouldBeExactly 7L
@@ -285,11 +296,12 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
         )
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = domainIdentifiers,
             eventTypes = eventTypes
         )
-        val appendCondition = AppendCondition(query = streamQuery, maximumEventSequence = SequenceNumber(7))
+        val appendCondition =
+            AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(7))
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 1).put("toAcct", 2).put("amount", 1)
         )
@@ -302,8 +314,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 val domainIdentifiersAcct1 = listOf(
                     DomainIdentifier(name = StateName("Account"), id = StateId("1"))
                 )
-                val streamQueryAcct1 = StreamQuery(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
-                stateBuilder.buildFor(streamQueryAcct1)
+                val transactionContextAcct1 =
+                    TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
+                stateBuilder.buildFor(transactionContextAcct1)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
                             sequence.value shouldBeExactly 8L
@@ -320,8 +333,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 val domainIdentifiersAcct2 = listOf(
                     DomainIdentifier(name = StateName("Account"), id = StateId("2"))
                 )
-                val streamQueryAcct2 = StreamQuery(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
-                stateBuilder.buildFor(streamQueryAcct2)
+                val transactionContextAcct2 =
+                    TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
+                stateBuilder.buildFor(transactionContextAcct2)
                     .onSuccess { (state, sequence) ->
                         testContext.verify {
                             sequence.value shouldBeExactly 8L
@@ -344,11 +358,11 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     @Test
     @Order(7)
     fun `Account 1 state is correct`(testContext: VertxTestContext) {
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
         )
-        stateBuilder.buildFor(streamQuery)
+        stateBuilder.buildFor(transactionContext)
             .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
                 testContext.verify {
                     sequence.value shouldBeExactly 8L
@@ -365,11 +379,11 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     @Test
     @Order(8)
     fun `Account 2 state is correct`(testContext: VertxTestContext) {
-        val streamQuery = StreamQuery(
+        val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
             eventTypes = eventTypes
         )
-        stateBuilder.buildFor(streamQuery)
+        stateBuilder.buildFor(transactionContext)
             .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
                 testContext.verify {
                     sequence.value shouldBeExactly 8L

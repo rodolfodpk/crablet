@@ -2,7 +2,7 @@ package crablet.postgres
 
 import crablet.SequenceNumber
 import crablet.StateBuilder
-import crablet.StreamQuery
+import crablet.TransactionContext
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
@@ -19,24 +19,14 @@ class CrabletStateBuilder<S>(
     private val pageSize: Int = 1000,
 ) : StateBuilder<S> {
 
-    private fun sqlQuery(): String {
-        return """select event_payload, sequence_id
-      |         from events
-      |        where domain_ids @> $1::text[]
-      |          and event_type = ANY($2)
-      |        order by sequence_id
-      |
-    """.trimMargin()
-    }
-
     override fun buildFor(
-        query: StreamQuery,
+        transactionContext: TransactionContext,
     ): Future<Pair<S, SequenceNumber>> {
 
         val promise = Promise.promise<Pair<S, SequenceNumber>>()
         val sql = sqlQuery()
-        val domainIds = query.identifiers.map { it.toStorageFormat() }.sorted().toTypedArray()
-        val eventTypes = query.eventTypes.map { it.value }.toTypedArray()
+        val domainIds = transactionContext.identifiers.map { it.toStorageFormat() }.sorted().toTypedArray()
+        val eventTypes = transactionContext.eventTypes.map { it.value }.toTypedArray()
         val tuple = Tuple.of(domainIds, eventTypes)
         var finalState = initialState
         var lastSequence = 0L
@@ -85,6 +75,16 @@ class CrabletStateBuilder<S>(
                 }
         }
         return promise.future()
+    }
+
+    private fun sqlQuery(): String {
+        return """select event_payload, sequence_id
+      |         from events
+      |        where domain_ids @> $1::text[]
+      |          and event_type = ANY($2)
+      |        order by sequence_id
+      |
+    """.trimMargin()
     }
 
     companion object {

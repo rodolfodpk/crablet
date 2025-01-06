@@ -7,7 +7,7 @@
 //import crablet.SequenceNumber
 //import crablet.StateId
 //import crablet.StateName
-//import crablet.StreamQuery
+//import crablet.TransactionContext
 //import crablet.postgres.AbstractCrabletTest
 //import crablet.postgres.AccountTransferScenarioTest
 //import crablet.postgres.AccountTransferScenarioTest.Companion
@@ -56,7 +56,7 @@
 //    @Test
 //    @Order(1)
 //    fun `it can open Account 1 with $100`() {
-//        val streamQuery = StreamQuery(
+//        val streamQuery = TransactionContext(
 //            identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
 //            eventTypes = eventTypes
 //        )
