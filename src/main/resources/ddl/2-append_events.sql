@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION append_events(
     _domain_ids TEXT[],
-    _base_sequence_id BIGINT,
+    _expected_sequence_id BIGINT,
     _event_types TEXT[],
     _event_payloads TEXT[]
 ) RETURNS BIGINT
@@ -49,7 +49,7 @@ BEGIN
     END IF;
 
     -- Ensure the provided _base_sequence_id matches the current sequence or is null (allowing the first insert)
-    IF _lastEventSequenceId IS NULL OR _lastEventSequenceId = _base_sequence_id THEN
+    IF _lastEventSequenceId IS NULL OR _lastEventSequenceId = _expected_sequence_id THEN
         -- Loop through the event payloads
         FOR i IN 1 .. array_length(_event_payloads, 1)
             LOOP
@@ -62,7 +62,7 @@ BEGIN
             END LOOP;
     ELSE
         -- Raise an exception if sequence mismatch is detected
-        RAISE EXCEPTION 'Sequence mismatch: the last sequence from the database does not match the supplied lastSequence parameter.';
+        RAISE EXCEPTION 'Sequence mismatch: the last sequence from the database does not match the expected sequence id parameter: %.', _expected_sequence_id;
     END IF;
 
     -- Return the sequence of the last event inserted

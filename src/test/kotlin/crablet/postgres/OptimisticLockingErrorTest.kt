@@ -10,6 +10,7 @@ import crablet.TransactionContext
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.vertx.core.json.JsonObject
 import io.vertx.junit5.VertxExtension
 import io.vertx.junit5.VertxTestContext
@@ -76,6 +77,10 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
                 testContext.failNow("It should fail")
             }
             .onFailure {
+                testContext.verify {
+                    it.message shouldContain
+                            "Sequence mismatch: the last sequence from the database does not match the expected sequence id parameter: 2"
+                }
                 testContext.completeNow()
             }
     }
