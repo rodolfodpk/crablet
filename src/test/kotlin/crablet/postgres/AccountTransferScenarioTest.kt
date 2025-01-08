@@ -11,6 +11,7 @@ import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
 import io.vertx.core.json.JsonObject
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
@@ -28,7 +29,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
 
     @Test
     @Order(1)
-    fun `it can open Account 1 with $100`() {
+    fun `it can open Account 1 with $100`() = runTest {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
@@ -51,7 +52,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
 
     @Test
     @Order(2)
-    fun `it can open Account 2 with $0`() {
+    fun `it can open Account 2 with $0`() = runTest {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
             eventTypes = eventTypes
@@ -72,7 +73,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
 
     @Test
     @Order(3)
-    fun `it can transfer $30 from Account 1 to Account 2 within the same db transaction`() {
+    fun `it can transfer $30 from Account 1 to Account 2 within the same db transaction`() = runTest {
         val domainIdentifiers = listOf(
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
@@ -112,7 +113,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
 
     @Test
     @Order(4)
-    fun `it can transfer $10 from Account 2 to Account 1 within the same db transaction`() {
+    fun `it can transfer $10 from Account 2 to Account 1 within the same db transaction`() = runTest {
         val domainIdentifiers = listOf(
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
@@ -153,7 +154,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
 
     @Test
     @Order(5)
-    fun `it can transfer $1 from Account 2 to Account 1 within the same db transaction`() {
+    fun `it can transfer $1 from Account 2 to Account 1 within the same db transaction`() = runTest {
         val domainIdentifiers = listOf(
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))

@@ -11,6 +11,7 @@ import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.vertx.core.json.JsonObject
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
@@ -28,7 +29,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
 
     @Test
     @Order(1)
-    fun `it can open Account 1 with correct IDs`() {
+    fun `it can open Account 1 with correct IDs`() = runTest {
         val testRepository = TestRepository(pool)
 
         val transactionContext = TransactionContext(
@@ -60,7 +61,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
 
     @Test
     @Order(2)
-    fun `it can open Account 2  with correct IDs`() {
+    fun `it can open Account 2  with correct IDs`() = runTest {
         val testRepository = TestRepository(pool)
 
         val transactionContext = TransactionContext(

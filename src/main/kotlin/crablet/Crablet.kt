@@ -25,12 +25,12 @@ data class AppendCondition(val transactionContext: TransactionContext, val expec
 // write
 
 interface EventsAppender {
-    fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): SequenceNumber
+    suspend fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): SequenceNumber
 }
 
 // read
 
 interface StateBuilder<S> {
-    fun buildFor(transactionContext: TransactionContext): Pair<S, SequenceNumber>
+    suspend fun buildFor(transactionContext: TransactionContext): Pair<S, SequenceNumber>
 }
 

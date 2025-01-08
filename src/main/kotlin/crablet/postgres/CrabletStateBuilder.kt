@@ -5,6 +5,7 @@ import crablet.StateBuilder
 import crablet.TransactionContext
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
+import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowStream
@@ -18,7 +19,7 @@ class CrabletStateBuilder<S>(
     private val pageSize: Int = 1000,
 ) : StateBuilder<S> {
 
-    override fun buildFor(
+    override suspend fun buildFor(
         transactionContext: TransactionContext,
     ): Pair<S, SequenceNumber> {
 
@@ -70,7 +71,7 @@ class CrabletStateBuilder<S>(
                         }
                 }
         }
-        return promise.future().await()
+        return promise.future().coAwait()
     }
 
     private fun sqlQuery(): String {

@@ -13,6 +13,7 @@ import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.vertx.core.json.JsonObject
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
@@ -30,7 +31,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
 
     @Test
     @Order(1)
-    fun `it can open Account 1 with $100`() {
+    fun `it can open Account 1 with $100`() = runTest {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
@@ -53,7 +54,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
 
     @Test
     @Order(2)
-    fun `it will fail if expectedCurrentSequence does not match`() {
+    fun `it will fail if expectedCurrentSequence does not match`() = runTest {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
@@ -71,7 +72,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
 
     @Test
     @Order(3)
-    fun `Account 1 state is intact`() {
+    fun `Account 1 state is intact`() = runTest {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
