@@ -30,8 +30,6 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
     @Order(1)
     fun `it can open Account 1 with correct IDs`() =
         runTest {
-            val testRepository = TestRepository(pool)
-
             val transactionContext =
                 TransactionContext(
                     identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
@@ -66,8 +64,6 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
     @Order(2)
     fun `it can open Account 2  with correct IDs`() =
         runTest {
-            val testRepository = TestRepository(pool)
-
             val transactionContext =
                 TransactionContext(
                     identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),

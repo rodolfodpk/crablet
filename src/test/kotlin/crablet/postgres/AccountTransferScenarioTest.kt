@@ -31,7 +31,10 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     fun `it can open Account 1 with $100`() =
         runTest {
             val appendCondition =
-                AppendCondition(transactionContext = transactionContextAcct1, expectedCurrentSequence = SequenceNumber(0))
+                AppendCondition(
+                    transactionContext = transactionContextAcct1,
+                    expectedCurrentSequence = SequenceNumber(0)
+                )
             val eventsToAppend =
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 1),
@@ -52,7 +55,10 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     fun `it can open Account 2 with $0`() =
         runTest {
             val appendCondition =
-                AppendCondition(transactionContext = transactionContextAcct2, expectedCurrentSequence = SequenceNumber(0))
+                AppendCondition(
+                    transactionContext = transactionContextAcct2,
+                    expectedCurrentSequence = SequenceNumber(0)
+                )
             val eventsToAppend =
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 2),

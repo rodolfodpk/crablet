@@ -32,13 +32,11 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
     @Order(1)
     fun `it can open Account 1 with $100`() =
         runTest {
-            val transactionContext =
-                TransactionContext(
-                    identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
-                    eventTypes = eventTypes,
-                )
             val appendCondition =
-                AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(0))
+                AppendCondition(
+                    transactionContext = transactionContextAcct1,
+                    expectedCurrentSequence = SequenceNumber(0)
+                )
             val eventsToAppend =
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 1),
@@ -48,7 +46,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 3L
 
-            val (state, seq) = stateBuilder.buildFor(transactionContext)
+            val (state, seq) = stateBuilder.buildFor(transactionContextAcct1)
             seq.value shouldBeExactly 3L
             state.id shouldBe 1
             state.balance shouldBeExactly 100
@@ -58,13 +56,11 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
     @Order(2)
     fun `it will fail if expectedCurrentSequence does not match`() =
         runTest {
-            val transactionContext =
-                TransactionContext(
-                    identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
-                    eventTypes = eventTypes,
-                )
             val appendCondition =
-                AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(2))
+                AppendCondition(
+                    transactionContext = transactionContextAcct1,
+                    expectedCurrentSequence = SequenceNumber(2)
+                )
             val eventsToAppend =
                 listOf(
                     JsonObject().put("type", "AmountDeposited").put("amount", 60),
@@ -74,19 +70,14 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
                     eventsAppender.appendIf(eventsToAppend, appendCondition)
                 }
             exception.message shouldContain
-                "Sequence mismatch: the current last sequence 3 from the database does not match the expected sequence: 2."
+                    "Sequence mismatch: the current last sequence 3 from the database does not match the expected sequence: 2."
         }
 
     @Test
     @Order(3)
     fun `Account 1 state is intact`() =
         runTest {
-            val transactionContext =
-                TransactionContext(
-                    identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
-                    eventTypes = eventTypes,
-                )
-            val (state, sequence) = stateBuilder.buildFor(transactionContext)
+            val (state, sequence) = stateBuilder.buildFor(transactionContextAcct1)
             sequence.value shouldBeExactly 3L
             state.id shouldBe 1
             state.balance shouldBeExactly 100
@@ -101,7 +92,11 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             val balance: Int = 0,
         )
 
-        val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
+        val transactionContextAcct1 =
+            TransactionContext(
+                identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
+                eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) },
+            )
 
         private val evolveFunction: (Account, JsonObject) -> Account = { state, event ->
             when (event.getString("type")) {
