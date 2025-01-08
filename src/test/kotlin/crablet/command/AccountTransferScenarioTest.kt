@@ -1,17 +1,12 @@
-package crablet.postgres
+package crablet.command
 
 import crablet.AbstractCrabletTest
 import crablet.EventName
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
-import crablet.command.AppendCondition
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
-import crablet.command.DomainIdentifier
-import crablet.command.StateId
-import crablet.command.StateName
-import crablet.command.TransactionContext
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe

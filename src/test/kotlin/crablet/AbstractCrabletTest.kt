@@ -1,4 +1,4 @@
-package crablet.postgres
+package crablet
 
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.sqlclient.Pool
@@ -20,11 +20,11 @@ abstract class AbstractCrabletTest {
                     withUsername(DB_USERNAME)
                     withPassword(DB_PASSWORD)
                     withCopyFileToContainer(
-                        MountableFile.forClasspathResource("./ddl/1-events_table.sql"),
+                        MountableFile.forClasspathResource("ddl/1-events_table.sql"),
                         "/docker-entrypoint-initdb.d/1-events_table.sql",
                     )
                     withCopyFileToContainer(
-                        MountableFile.forClasspathResource("./ddl/2-append_events.sql"),
+                        MountableFile.forClasspathResource("ddl/2-append_events.sql"),
                         "/docker-entrypoint-initdb.d/2-append_events.sql",
                     )
                     withEnv("POSTGRES_LOG_CONNECTIONS", "on")

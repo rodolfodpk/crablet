@@ -1,4 +1,4 @@
-package crablet.postgres
+package crablet
 
 import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool

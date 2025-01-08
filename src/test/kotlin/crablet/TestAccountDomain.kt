@@ -1,4 +1,4 @@
-package crablet.postgres
+package crablet
 
 import io.vertx.core.json.JsonObject
 

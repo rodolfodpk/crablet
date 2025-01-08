@@ -1,8 +1,8 @@
-package crablet.postgres
+package crablet.command.impl
 
 import crablet.SequenceNumber
-import crablet.StateBuilder
-import crablet.TransactionContext
+import crablet.command.StateBuilder
+import crablet.command.TransactionContext
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.coAwait

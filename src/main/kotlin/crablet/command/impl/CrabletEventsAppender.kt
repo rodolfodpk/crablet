@@ -1,10 +1,10 @@
-package crablet.postgres
+package crablet.command.impl
 
-import crablet.AppendCondition
-import crablet.DomainIdentifier
 import crablet.EventName
-import crablet.EventsAppender
 import crablet.SequenceNumber
+import crablet.command.AppendCondition
+import crablet.command.DomainIdentifier
+import crablet.command.EventsAppender
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
