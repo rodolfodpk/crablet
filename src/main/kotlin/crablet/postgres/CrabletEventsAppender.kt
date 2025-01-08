@@ -16,7 +16,7 @@ import io.vertx.sqlclient.Tuple
 
 class CrabletEventsAppender(private val client: Pool) : EventsAppender {
 
-    override fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): Future<SequenceNumber> {
+    override fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): SequenceNumber {
         val promise = Promise.promise<SequenceNumber>()
 
         client.withTransaction { connection ->
@@ -26,7 +26,7 @@ class CrabletEventsAppender(private val client: Pool) : EventsAppender {
             .onSuccess { rowSet -> processRowSet(rowSet, promise) }
             .onFailure { throwable -> promise.fail(throwable) }
 
-        return promise.future()
+        return promise.future().await()
     }
 
     private fun prepareQueryParams(appendCondition: AppendCondition, events: List<JsonObject>) =

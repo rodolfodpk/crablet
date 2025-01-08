@@ -36,10 +36,10 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             JsonObject().put("type", "AmountDeposited").put("amount", 50),
             JsonObject().put("type", "AmountDeposited").put("amount", 50)
         )
-        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
         sequence.value shouldBeExactly 3L
 
-        val (state, seq) = stateBuilder.buildFor(transactionContext).await()
+        val (state, seq) = stateBuilder.buildFor(transactionContext)
         seq.value shouldBeExactly 3L
         state.id shouldBe 1
         state.balance shouldBeExactly 100
@@ -58,7 +58,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             JsonObject().put("type", "AmountDeposited").put("amount", 60)
         )
         val exception = shouldThrow<Exception> {
-            eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
         }
         exception.message shouldContain "Sequence mismatch: the current last sequence 3 from the database does not match the expected sequence: 2."
     }
@@ -70,7 +70,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
         )
-        val (state, sequence) = stateBuilder.buildFor(transactionContext).await()
+        val (state, sequence) = stateBuilder.buildFor(transactionContext)
         sequence.value shouldBeExactly 3L
         state.id shouldBe 1
         state.balance shouldBeExactly 100

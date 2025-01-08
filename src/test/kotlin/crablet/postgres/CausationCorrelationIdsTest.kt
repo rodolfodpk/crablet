@@ -37,7 +37,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
             JsonObject().put("type", "AmountDeposited").put("amount", 20),
             JsonObject().put("type", "AmountDeposited").put("amount", 30)
         )
-        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
         sequence.value shouldBeExactly 4L
         val ids = testRepository.getSequences()!!.await()
         val expectedResults = listOf(
@@ -69,7 +69,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
             JsonObject().put("type", "AmountDeposited").put("amount", 20),
             JsonObject().put("type", "AmountDeposited").put("amount", 30)
         )
-        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
         sequence.value shouldBeExactly 8L
         val ids = testRepository.getSequences()!!.await()
         val expectedResults = listOf(

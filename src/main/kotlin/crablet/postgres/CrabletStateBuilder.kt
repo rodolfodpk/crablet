@@ -3,7 +3,6 @@ package crablet.postgres
 import crablet.SequenceNumber
 import crablet.StateBuilder
 import crablet.TransactionContext
-import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Pool
@@ -21,7 +20,7 @@ class CrabletStateBuilder<S>(
 
     override fun buildFor(
         transactionContext: TransactionContext,
-    ): Future<Pair<S, SequenceNumber>> {
+    ): Pair<S, SequenceNumber> {
 
         val promise = Promise.promise<Pair<S, SequenceNumber>>()
         val sql = sqlQuery()
@@ -71,7 +70,7 @@ class CrabletStateBuilder<S>(
                         }
                 }
         }
-        return promise.future()
+        return promise.future().await()
     }
 
     private fun sqlQuery(): String {

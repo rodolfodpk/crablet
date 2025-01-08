@@ -34,10 +34,10 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             JsonObject().put("type", "AmountDeposited").put("amount", 50),
             JsonObject().put("type", "AmountDeposited").put("amount", 50)
         )
-        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
         sequence.value shouldBeExactly 3L
 
-        val (state, seq) = stateBuilder.buildFor(transactionContext).await()
+        val (state, seq) = stateBuilder.buildFor(transactionContext)
         seq.value shouldBeExactly 3L
         state.id shouldBe 1
         state.balance shouldBeExactly 100
@@ -55,10 +55,10 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         val eventsToAppend = listOf(
             JsonObject().put("type", "AccountOpened").put("id", 2)
         )
-        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
         sequence.value shouldBeExactly 4L
 
-        val (state, seq) = stateBuilder.buildFor(transactionContext).await()
+        val (state, seq) = stateBuilder.buildFor(transactionContext)
         seq.value shouldBeExactly sequence.value
         state.id shouldBe 2
         state.balance shouldBeExactly 0
@@ -80,7 +80,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 1).put("toAcct", 2).put("amount", 30)
         )
-        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
         sequence.value shouldBeExactly 5L
 
         val domainIdentifiersAcct1 = listOf(
@@ -88,7 +88,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         )
         val (state1, seq1) = stateBuilder
             .buildFor(TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes))
-            .await()
+
         seq1.value shouldBeExactly sequence.value
         state1.id shouldBe 1
         state1.balance shouldBeExactly 70
@@ -98,7 +98,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         )
         val (state2, seq2) = stateBuilder
             .buildFor(TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes))
-            .await()
+
         seq2.value shouldBeExactly sequence.value
         state2.id shouldBe 2
         state2.balance shouldBeExactly 30
@@ -120,7 +120,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 2).put("toAcct", 1).put("amount", 10)
         )
-        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
         sequence.value shouldBeExactly 6L
 
         val domainIdentifiersAcct1 = listOf(
@@ -128,7 +128,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         )
         val (state1, seq1) = stateBuilder
             .buildFor(TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes))
-            .await()
+
         seq1.value shouldBeExactly sequence.value
         state1.id shouldBe 1
         state1.balance shouldBeExactly 80
@@ -138,7 +138,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         )
         val (state2, seq2) = stateBuilder
             .buildFor(TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes))
-            .await()
+
         seq2.value shouldBeExactly sequence.value
         state2.id shouldBe 2
         state2.balance shouldBeExactly 20
@@ -161,7 +161,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 2).put("toAcct", 1).put("amount", 1)
         )
-        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
         sequence.value shouldBeExactly 7L
 
         val domainIdentifiersAcct1 = listOf(
@@ -169,7 +169,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         )
         val (state1, seq1) = stateBuilder
             .buildFor(TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes))
-            .await()
+
         seq1.value shouldBeExactly sequence.value
         state1.id shouldBe 1
         state1.balance shouldBeExactly 81
@@ -179,7 +179,6 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         )
         val (state2, seq2) = stateBuilder
             .buildFor(TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes))
-            .await()
         seq2.value shouldBeExactly sequence.value
         state2.id shouldBe 2
         state2.balance shouldBeExactly 19
