@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
 
 class CrabletStateBuilder<S>(
     private val client: Pool,
-    private val initialState: S,
+    private val initialState: () -> S,
     private val evolveFunction: (S, JsonObject) -> S,
     private val pageSize: Int = 1000,
 ) : StateBuilder<S> {
@@ -27,7 +27,7 @@ class CrabletStateBuilder<S>(
         val domainIds = transactionContext.identifiers.map { it.toStorageFormat() }.sorted().toTypedArray()
         val eventTypes = transactionContext.eventTypes.map { it.value }.toTypedArray()
         val tuple = Tuple.of(domainIds, eventTypes)
-        var finalState = initialState
+        var finalState = initialState.invoke()
         var lastSequence = 0L
         var error: RuntimeException? = null
 

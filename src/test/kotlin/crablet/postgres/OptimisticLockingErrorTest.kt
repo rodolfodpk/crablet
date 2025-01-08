@@ -113,7 +113,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             eventsAppender = CrabletEventsAppender(pool)
             stateBuilder = CrabletStateBuilder(
                 client = pool,
-                initialState = Account(),
+                initialState = { Account() },
                 evolveFunction = evolveFunction
             )
             cleanDatabase()
