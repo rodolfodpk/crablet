@@ -8,8 +8,8 @@ interface SubscriptionsRegistry {
     suspend fun startSubscription(
         name: String,
         eventTypes: List<EventName>,
-        effect: (sqlConnection: SqlConnection, eventAsJson: JsonObject) -> JsonObject,
-        viewEffect: (viewAsJson: JsonObject) -> Void,
+        eventEffectFunction: (sqlConnection: SqlConnection, eventAsJson: JsonObject) -> JsonObject,
+        viewEffectFunction: (viewAsJson: JsonObject) -> Void,
     )
 }
 
