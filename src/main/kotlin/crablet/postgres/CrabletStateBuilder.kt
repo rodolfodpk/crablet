@@ -58,11 +58,8 @@ class CrabletStateBuilder<S>(
                                 // Close the stream to release the resources in the database
                                 stream
                                     .close()
-                                    .onComplete {
+                                    .compose {
                                         tx.commit()
-                                            .onComplete {
-                                                logger.debug("End of stream")
-                                            }
                                     }
                             }
                             stream.handler { row: Row ->

@@ -22,7 +22,8 @@ class CrabletEventsAppender(private val client: Pool) : EventsAppender {
         client.withTransaction { connection ->
             val params = prepareQueryParams(appendCondition, events)
             executeQuery(connection, params)
-        }.onSuccess { rowSet -> processRowSet(rowSet, promise) }
+        }
+            .onSuccess { rowSet -> processRowSet(rowSet, promise) }
             .onFailure { throwable -> promise.fail(throwable) }
 
         return promise.future()
@@ -48,9 +49,9 @@ class CrabletEventsAppender(private val client: Pool) : EventsAppender {
             .execute(params)
 
     private fun processRowSet(rowSet: RowSet<Row>, promise: Promise<SequenceNumber>) {
-        val firstRowSequenceId = rowSet.first().getLong(LAST_SEQUENCE_ID)
+        val firstRowSequenceId = rowSet.first()?.getLong(LAST_SEQUENCE_ID)
 
-        if (rowSet.rowCount() == 1 && firstRowSequenceId != null) {
+        if (firstRowSequenceId != null && rowSet.rowCount() == 1) {
             promise.complete(SequenceNumber(firstRowSequenceId))
         } else {
             promise.fail("No last_sequence_id returned from append_events function")

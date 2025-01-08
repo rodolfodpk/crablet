@@ -1,6 +1,5 @@
 package crablet.postgres
 
-import io.vertx.core.Future
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.PoolOptions
@@ -50,23 +49,23 @@ abstract class AbstractCrabletTest {
             Pool.pool(connectOptions, poolOptions)
         }
 
-        fun cleanDatabase(): Future<Void> {
+        fun cleanDatabase() {
             println("Cleaning database -------------")
-            return pool.query("TRUNCATE TABLE events").execute()
+            pool.query("TRUNCATE TABLE events").execute()
                 .compose {
                     pool.query("ALTER SEQUENCE events_sequence_id_seq RESTART WITH 1").execute()
-                }.mapEmpty()
+                }.await()
         }
 
-        fun dumpEvents(): Future<Void> {
-            return pool.query("select * from events order by sequence_id").execute()
+        fun dumpEvents() {
+            pool.query("select * from events order by sequence_id").execute()
                 .onSuccess { rs ->
                     println("Events -------------")
                     rs.forEach {
                         println(it.toJson())
                     }
                 }
-                .mapEmpty()
+                .await()
         }
     }
 

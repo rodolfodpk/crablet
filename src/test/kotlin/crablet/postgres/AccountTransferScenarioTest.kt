@@ -11,22 +11,18 @@ import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
 import io.vertx.core.json.JsonObject
-import io.vertx.junit5.VertxExtension
-import io.vertx.junit5.VertxTestContext
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountTransferScenarioTest : AbstractCrabletTest() {
 
     @Test
     @Order(1)
-    fun `it can open Account 1 with $100`(testContext: VertxTestContext) {
+    fun `it can open Account 1 with $100`() {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
@@ -38,30 +34,18 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             JsonObject().put("type", "AmountDeposited").put("amount", 50),
             JsonObject().put("type", "AmountDeposited").put("amount", 50)
         )
-        eventsAppender.appendIf(eventsToAppend, appendCondition)
-            .compose {
-                dumpEvents()
-            }
-            .compose {
-                stateBuilder.buildFor(transactionContext)
-            }
-            .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
-                testContext.verify {
-                    sequence.value shouldBeExactly 3L
-                    state.id shouldBe 1
-                    state.balance shouldBeExactly 100
-                }
-                testContext.completeNow()
-            }
-            .onFailure { it ->
-                testContext.failNow(it)
-            }
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        sequence.value shouldBeExactly 3L
 
+        val (state, seq) = stateBuilder.buildFor(transactionContext).await()
+        seq.value shouldBeExactly 3L
+        state.id shouldBe 1
+        state.balance shouldBeExactly 100
     }
 
     @Test
     @Order(2)
-    fun `it can open Account 2  with $0`(testContext: VertxTestContext) {
+    fun `it can open Account 2 with $0`() {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
             eventTypes = eventTypes
@@ -71,29 +55,18 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         val eventsToAppend = listOf(
             JsonObject().put("type", "AccountOpened").put("id", 2)
         )
-        eventsAppender.appendIf(eventsToAppend, appendCondition)
-            .compose {
-                dumpEvents()
-            }
-            .compose {
-                stateBuilder.buildFor(transactionContext)
-            }
-            .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
-                testContext.verify {
-                    sequence.value shouldBeExactly 4L
-                    state.id shouldBe 2
-                    state.balance shouldBeExactly 0
-                }
-                testContext.completeNow()
-            }
-            .onFailure { it ->
-                testContext.failNow(it)
-            }
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        sequence.value shouldBeExactly 4L
+
+        val (state, seq) = stateBuilder.buildFor(transactionContext).await()
+        seq.value shouldBeExactly sequence.value
+        state.id shouldBe 2
+        state.balance shouldBeExactly 0
     }
 
     @Test
     @Order(3)
-    fun `it can transfer $30 from Account 1 to Account 2 within the same db transaction`(testContext: VertxTestContext) {
+    fun `it can transfer $30 from Account 1 to Account 2 within the same db transaction`() {
         val domainIdentifiers = listOf(
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
@@ -107,59 +80,33 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 1).put("toAcct", 2).put("amount", 30)
         )
-        eventsAppender.appendIf(eventsToAppend, appendCondition)
-            .compose {
-                dumpEvents()
-            }
-            .compose {
-                // assert acct1 state
-                val domainIdentifiersAcct1 = listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("1"))
-                )
-                val transactionContextAcct1 =
-                    TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
-                stateBuilder.buildFor(transactionContextAcct1)
-                    .onSuccess { (state, sequence) ->
-                        testContext.verify {
-                            sequence.value shouldBeExactly 5L
-                            state.id shouldBe 1
-                            state.balance shouldBeExactly 70
-                        }
-                    }
-                    .onFailure {
-                        testContext.failNow(it)
-                    }
-            }
-            .compose {
-                // assert acct2 state
-                val domainIdentifiersAcct2 = listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("2"))
-                )
-                val transactionContextAcct2 =
-                    TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
-                stateBuilder.buildFor(transactionContextAcct2)
-                    .onSuccess { (state, sequence) ->
-                        testContext.verify {
-                            sequence.value shouldBeExactly 5L
-                            state.id shouldBe 2
-                            state.balance shouldBeExactly 30
-                        }
-                    }
-                    .onFailure {
-                        testContext.failNow(it)
-                    }
-            }
-            .onSuccess {
-                testContext.completeNow()
-            }
-            .onFailure {
-                testContext.failNow(it)
-            }
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        sequence.value shouldBeExactly 5L
+
+        val domainIdentifiersAcct1 = listOf(
+            DomainIdentifier(name = StateName("Account"), id = StateId("1"))
+        )
+        val (state1, seq1) = stateBuilder
+            .buildFor(TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes))
+            .await()
+        seq1.value shouldBeExactly sequence.value
+        state1.id shouldBe 1
+        state1.balance shouldBeExactly 70
+
+        val domainIdentifiersAcct2 = listOf(
+            DomainIdentifier(name = StateName("Account"), id = StateId("2"))
+        )
+        val (state2, seq2) = stateBuilder
+            .buildFor(TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes))
+            .await()
+        seq2.value shouldBeExactly sequence.value
+        state2.id shouldBe 2
+        state2.balance shouldBeExactly 30
     }
 
     @Test
     @Order(4)
-    fun `it can transfer $10 from Account 2 to Account 1 within the same db transaction`(testContext: VertxTestContext) {
+    fun `it can transfer $10 from Account 2 to Account 1 within the same db transaction`() {
         val domainIdentifiers = listOf(
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
@@ -173,59 +120,34 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 2).put("toAcct", 1).put("amount", 10)
         )
-        eventsAppender.appendIf(eventsToAppend, appendCondition)
-            .compose {
-                dumpEvents()
-            }
-            .compose {
-                // assert acct1 state
-                val domainIdentifiersAcct1 = listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("1"))
-                )
-                val transactionContextAcct1 =
-                    TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
-                stateBuilder.buildFor(transactionContextAcct1)
-                    .onSuccess { (state, sequence) ->
-                        testContext.verify {
-                            sequence.value shouldBeExactly 6L
-                            state.id shouldBe 1
-                            state.balance shouldBeExactly 80
-                        }
-                    }
-                    .onFailure {
-                        testContext.failNow(it)
-                    }
-            }
-            .compose {
-                // assert acct2 state
-                val domainIdentifiersAcct2 = listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("2"))
-                )
-                val transactionContextAcct2 =
-                    TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
-                stateBuilder.buildFor(transactionContextAcct2)
-                    .onSuccess { (state, sequence) ->
-                        testContext.verify {
-                            sequence.value shouldBeExactly 6L
-                            state.id shouldBe 2
-                            state.balance shouldBeExactly 20
-                        }
-                    }
-                    .onFailure {
-                        testContext.failNow(it)
-                    }
-            }
-            .onSuccess {
-                testContext.completeNow()
-            }
-            .onFailure {
-                testContext.failNow(it)
-            }
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        sequence.value shouldBeExactly 6L
+
+        val domainIdentifiersAcct1 = listOf(
+            DomainIdentifier(name = StateName("Account"), id = StateId("1"))
+        )
+        val (state1, seq1) = stateBuilder
+            .buildFor(TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes))
+            .await()
+        seq1.value shouldBeExactly sequence.value
+        state1.id shouldBe 1
+        state1.balance shouldBeExactly 80
+
+        val domainIdentifiersAcct2 = listOf(
+            DomainIdentifier(name = StateName("Account"), id = StateId("2"))
+        )
+        val (state2, seq2) = stateBuilder
+            .buildFor(TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes))
+            .await()
+        seq2.value shouldBeExactly sequence.value
+        state2.id shouldBe 2
+        state2.balance shouldBeExactly 20
+
     }
 
     @Test
     @Order(5)
-    fun `it can transfer $1 from Account 2 to Account 1 within the same db transaction`(testContext: VertxTestContext) {
+    fun `it can transfer $1 from Account 2 to Account 1 within the same db transaction`() {
         val domainIdentifiers = listOf(
             DomainIdentifier(name = StateName("Account"), id = StateId("1")),
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
@@ -239,162 +161,28 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountTransferred").put("fromAcct", 2).put("toAcct", 1).put("amount", 1)
         )
-        eventsAppender.appendIf(eventsToAppend, appendCondition)
-            .compose {
-                dumpEvents()
-            }
-            .compose {
-                // assert acct1 state
-                val domainIdentifiersAcct1 = listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("1"))
-                )
-                val transactionContextAcct1 =
-                    TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
-                stateBuilder.buildFor(transactionContextAcct1)
-                    .onSuccess { (state, sequence) ->
-                        testContext.verify {
-                            sequence.value shouldBeExactly 7L
-                            state.id shouldBe 1
-                            state.balance shouldBeExactly 81
-                        }
-                    }
-                    .onFailure {
-                        testContext.failNow(it)
-                    }
-            }
-            .compose {
-                // assert acct2 state
-                val domainIdentifiersAcct2 = listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("2"))
-                )
-                val transactionContextAcct2 =
-                    TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
-                stateBuilder.buildFor(transactionContextAcct2)
-                    .onSuccess { (state, sequence) ->
-                        testContext.verify {
-                            sequence.value shouldBeExactly 7L
-                            state.id shouldBe 2
-                            state.balance shouldBeExactly 19
-                        }
-                    }
-                    .onFailure {
-                        testContext.failNow(it)
-                    }
-            }
-            .onSuccess {
-                testContext.completeNow()
-            }
-            .onFailure {
-                testContext.failNow(it)
-            }
-    }
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition).await()
+        sequence.value shouldBeExactly 7L
 
-    @Test
-    @Order(6)
-    fun `it can transfer $1 from Account 1 to Account 2 within the same db transaction`(testContext: VertxTestContext) {
-        val domainIdentifiers = listOf(
-            DomainIdentifier(name = StateName("Account"), id = StateId("1")),
+        val domainIdentifiersAcct1 = listOf(
+            DomainIdentifier(name = StateName("Account"), id = StateId("1"))
+        )
+        val (state1, seq1) = stateBuilder
+            .buildFor(TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes))
+            .await()
+        seq1.value shouldBeExactly sequence.value
+        state1.id shouldBe 1
+        state1.balance shouldBeExactly 81
+
+        val domainIdentifiersAcct2 = listOf(
             DomainIdentifier(name = StateName("Account"), id = StateId("2"))
         )
-        val transactionContext = TransactionContext(
-            identifiers = domainIdentifiers,
-            eventTypes = eventTypes
-        )
-        val appendCondition =
-            AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(7))
-        val eventsToAppend = listOf(
-            JsonObject().put("type", "AmountTransferred").put("fromAcct", 1).put("toAcct", 2).put("amount", 1)
-        )
-        eventsAppender.appendIf(eventsToAppend, appendCondition)
-            .compose {
-                dumpEvents()
-            }
-            .compose {
-                // assert acct1 state
-                val domainIdentifiersAcct1 = listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("1"))
-                )
-                val transactionContextAcct1 =
-                    TransactionContext(identifiers = domainIdentifiersAcct1, eventTypes = eventTypes)
-                stateBuilder.buildFor(transactionContextAcct1)
-                    .onSuccess { (state, sequence) ->
-                        testContext.verify {
-                            sequence.value shouldBeExactly 8L
-                            state.id shouldBe 1
-                            state.balance shouldBeExactly 80
-                        }
-                    }
-                    .onFailure {
-                        testContext.failNow(it)
-                    }
-            }
-            .compose {
-                // assert acct2 state
-                val domainIdentifiersAcct2 = listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("2"))
-                )
-                val transactionContextAcct2 =
-                    TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes)
-                stateBuilder.buildFor(transactionContextAcct2)
-                    .onSuccess { (state, sequence) ->
-                        testContext.verify {
-                            sequence.value shouldBeExactly 8L
-                            state.id shouldBe 2
-                            state.balance shouldBeExactly 20
-                        }
-                    }
-                    .onFailure {
-                        testContext.failNow(it)
-                    }
-            }
-            .onSuccess {
-                testContext.completeNow()
-            }
-            .onFailure {
-                testContext.failNow(it)
-            }
-    }
-
-    @Test
-    @Order(7)
-    fun `Account 1 state is correct`(testContext: VertxTestContext) {
-        val transactionContext = TransactionContext(
-            identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
-            eventTypes = eventTypes
-        )
-        stateBuilder.buildFor(transactionContext)
-            .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
-                testContext.verify {
-                    sequence.value shouldBeExactly 8L
-                    state.id shouldBe 1
-                    state.balance shouldBeExactly 80
-                }
-                testContext.completeNow()
-            }
-            .onFailure { it ->
-                testContext.failNow(it)
-            }
-    }
-
-    @Test
-    @Order(8)
-    fun `Account 2 state is correct`(testContext: VertxTestContext) {
-        val transactionContext = TransactionContext(
-            identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
-            eventTypes = eventTypes
-        )
-        stateBuilder.buildFor(transactionContext)
-            .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
-                testContext.verify {
-                    sequence.value shouldBeExactly 8L
-                    state.id shouldBe 2
-                    state.balance shouldBeExactly 20
-                }
-                testContext.completeNow()
-            }
-            .onFailure { it ->
-                testContext.failNow(it)
-            }
+        val (state2, seq2) = stateBuilder
+            .buildFor(TransactionContext(identifiers = domainIdentifiersAcct2, eventTypes = eventTypes))
+            .await()
+        seq2.value shouldBeExactly sequence.value
+        state2.id shouldBe 2
+        state2.balance shouldBeExactly 19
     }
 
     companion object {
@@ -429,14 +217,14 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
 
         @BeforeAll
         @JvmStatic
-        fun setUp(testContext: VertxTestContext) {
+        fun setUp() {
             eventsAppender = CrabletEventsAppender(pool)
             stateBuilder = CrabletStateBuilder(
                 client = pool,
                 initialState = Account(),
                 evolveFunction = evolveFunction
             )
-            cleanDatabase().onSuccess { testContext.completeNow() }
+            cleanDatabase()
         }
     }
 
