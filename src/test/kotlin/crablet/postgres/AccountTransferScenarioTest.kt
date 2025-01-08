@@ -11,6 +11,7 @@ import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
 import io.vertx.core.json.JsonObject
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -19,6 +20,11 @@ import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountTransferScenarioTest : AbstractCrabletTest() {
+
+    @AfterEach
+    fun log() {
+        dumpEvents()
+    }
 
     @Test
     @Order(1)
