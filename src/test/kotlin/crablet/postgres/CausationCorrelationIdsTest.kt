@@ -46,7 +46,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 4L
-            val ids = testRepository.getSequences()!!.await()
+            val ids = testRepository.getSequences()!!
             val expectedResults =
                 listOf(
                     Triple(1L, 1L, 1L),
@@ -80,7 +80,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 8L
-            val ids = testRepository.getSequences()!!.await()
+            val ids = testRepository.getSequences()!!
             val expectedResults =
                 listOf(
                     Triple(1L, 1L, 1L),
