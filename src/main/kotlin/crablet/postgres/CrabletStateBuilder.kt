@@ -18,14 +18,14 @@ class CrabletStateBuilder<S>(
     private val evolveFunction: (S, JsonObject) -> S,
     private val pageSize: Int = 1000,
 ) : StateBuilder<S> {
-
-    override suspend fun buildFor(
-        transactionContext: TransactionContext,
-    ): Pair<S, SequenceNumber> {
-
+    override suspend fun buildFor(transactionContext: TransactionContext): Pair<S, SequenceNumber> {
         val promise = Promise.promise<Pair<S, SequenceNumber>>()
         val sql = sqlQuery()
-        val domainIds = transactionContext.identifiers.map { it.toStorageFormat() }.sorted().toTypedArray()
+        val domainIds =
+            transactionContext.identifiers
+                .map { it.toStorageFormat() }
+                .sorted()
+                .toTypedArray()
         val eventTypes = transactionContext.eventTypes.map { it.value }.toTypedArray()
         val tuple = Tuple.of(domainIds, eventTypes)
         var finalState = initialState.invoke()
@@ -74,15 +74,14 @@ class CrabletStateBuilder<S>(
         return promise.future().coAwait()
     }
 
-    private fun sqlQuery(): String {
-        return """select event_payload, sequence_id
+    private fun sqlQuery(): String =
+        """select event_payload, sequence_id
       |         from events
       |        where domain_ids @> $1::text[]
       |          and event_type = ANY($2)
       |        order by sequence_id
       |
-    """.trimMargin()
-    }
+        """.trimMargin()
 
     companion object {
         private val logger = LoggerFactory.getLogger(CrabletStateBuilder::class.java)

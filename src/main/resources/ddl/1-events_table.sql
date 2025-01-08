@@ -19,8 +19,10 @@ CREATE TABLE events
     CONSTRAINT domain_ids_length_check CHECK (array_length(domain_ids, 1) BETWEEN 1 AND 7)
 );
 
+CREATE INDEX sequence_id_index ON events USING brin (sequence_id);
+
 CREATE INDEX domain_ids_gin_index ON events USING gin (domain_ids);
 
-CREATE INDEX idx_events_event_type ON events (event_type);
+CREATE INDEX event_type_index ON events (event_type);
 
-CREATE INDEX idx_events_correlation_id ON events (correlation_id);
+CREATE INDEX correlation_id_index ON events (correlation_id);

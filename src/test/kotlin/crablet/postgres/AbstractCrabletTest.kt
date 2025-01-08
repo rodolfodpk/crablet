@@ -7,9 +7,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
 
 abstract class AbstractCrabletTest {
-
     companion object {
-
         val PG_DOCKER_IMAGE = "postgres:latest"
         val DB_NAME = "postgres"
         val DB_USERNAME = "postgres"
@@ -39,34 +37,37 @@ abstract class AbstractCrabletTest {
 
         val pool: Pool by lazy {
             postgresqlContainer.start()
-            val connectOptions = PgConnectOptions()
-                .setPort(if (postgresqlContainer.isRunning) postgresqlContainer.firstMappedPort else 5432)
-                .setHost("127.0.0.1")
-                .setDatabase(DB_NAME)
-                .setUser(DB_USERNAME)
-                .setPassword(DB_PASSWORD)
+            val connectOptions =
+                PgConnectOptions()
+                    .setPort(if (postgresqlContainer.isRunning) postgresqlContainer.firstMappedPort else 5432)
+                    .setHost("127.0.0.1")
+                    .setDatabase(DB_NAME)
+                    .setUser(DB_USERNAME)
+                    .setPassword(DB_PASSWORD)
             val poolOptions = PoolOptions().setMaxSize(5)
             Pool.pool(connectOptions, poolOptions)
         }
 
         fun cleanDatabase() {
             println("Cleaning database -------------")
-            pool.query("TRUNCATE TABLE events").execute()
+            pool
+                .query("TRUNCATE TABLE events")
+                .execute()
                 .compose {
                     pool.query("ALTER SEQUENCE events_sequence_id_seq RESTART WITH 1").execute()
                 }.await()
         }
 
         fun dumpEvents() {
-            pool.query("select * from events order by sequence_id").execute()
+            pool
+                .query("select * from events order by sequence_id")
+                .execute()
                 .onSuccess { rs ->
                     println("Events -------------")
                     rs.forEach {
                         println(it.toJson())
                     }
-                }
-                .await()
+                }.await()
         }
     }
-
 }

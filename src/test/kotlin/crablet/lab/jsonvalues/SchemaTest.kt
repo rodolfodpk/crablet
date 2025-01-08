@@ -9,7 +9,6 @@ import crablet.lab.jsonvalues.CustomerEventsFields.NAME
 import crablet.lab.jsonvalues.CustomerEventsFields.REASON
 import crablet.lab.jsonvalues.CustomerEventsFields.TYPE
 import `fun`.gen.Gen
-
 import io.vertx.core.json.JsonObject
 import jsonvalues.JsObj
 import jsonvalues.JsPath
@@ -40,48 +39,58 @@ object CustomerEventsFields {
 fun getCustomerSpec(): JsSpec {
     val registeredEventSpec =
         JsObjSpec.of(
-            TYPE, cons(JsStr.of(CUSTOMER_REGISTERED)),
-            ID, str(),
-            NAME, str()
+            TYPE,
+            cons(JsStr.of(CUSTOMER_REGISTERED)),
+            ID,
+            str(),
+            NAME,
+            str(),
         )
 
     val activatedEventSpec =
         JsObjSpec.of(
-            TYPE, cons(JsStr.of(CUSTOMER_ACTIVATED)),
-            REASON, str(),
+            TYPE,
+            cons(JsStr.of(CUSTOMER_ACTIVATED)),
+            REASON,
+            str(),
         )
 
     val deactivatedEventSpec =
         JsObjSpec.of(
-            TYPE, cons(JsStr.of(CUSTOMER_DEACTIVATED)),
-            REASON, str(),
+            TYPE,
+            cons(JsStr.of(CUSTOMER_DEACTIVATED)),
+            REASON,
+            str(),
         )
 
     val renamedEventSpec =
         JsObjSpec.of(
-            TYPE, cons(JsStr.of(CUSTOMER_RENAMED)),
-            NAME, str(),
+            TYPE,
+            cons(JsStr.of(CUSTOMER_RENAMED)),
+            NAME,
+            str(),
         )
 
-    val spec: JsSpec = JsSpecs.oneSpecOf(
-        JsSpecs.ofNamedSpec(CUSTOMER_REGISTERED, registeredEventSpec),
-        JsSpecs.ofNamedSpec(CUSTOMER_ACTIVATED, activatedEventSpec),
-        JsSpecs.ofNamedSpec(CUSTOMER_DEACTIVATED, deactivatedEventSpec),
-        JsSpecs.ofNamedSpec(CUSTOMER_RENAMED, renamedEventSpec),
-    )
+    val spec: JsSpec =
+        JsSpecs.oneSpecOf(
+            JsSpecs.ofNamedSpec(CUSTOMER_REGISTERED, registeredEventSpec),
+            JsSpecs.ofNamedSpec(CUSTOMER_ACTIVATED, activatedEventSpec),
+            JsSpecs.ofNamedSpec(CUSTOMER_DEACTIVATED, deactivatedEventSpec),
+            JsSpecs.ofNamedSpec(CUSTOMER_RENAMED, renamedEventSpec),
+        )
 
     return spec
 }
 
-class CustomerRegistered(val map: Map<String, Any?>) {
+class CustomerRegistered(
+    val map: Map<String, Any?>,
+) {
     val id: String by map
     val name: String by map
 }
 
 fun main() {
-
     fun test1() {
-
         val event1 = CustomerRegistered(mapOf(ID to "1", NAME to "John Doe"))
 
         val event2 = CustomerRegistered(mapOf())
@@ -91,11 +100,9 @@ fun main() {
         val js1 = JsonObject(event1.map)
 
         println(js1.encodePrettily())
-
     }
 
     fun test2() {
-
         val customerEventSpec = getCustomerSpec()
 
         val jsonSchema: JsObj = SpecToJsonSchema.convert(customerEventSpec)
@@ -117,9 +124,7 @@ fun main() {
         println("Customer event type " + event.toJson().getStr(JsPath.path("/type")))
         println("Customer event type " + event.toJson().getStr(JsPath.path("/type")))
         println("Customer event name " + event.toJson().getStr(JsPath.path("/name"))) // can be null
-
     }
 
     test2()
-
 }

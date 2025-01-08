@@ -15,28 +15,34 @@ import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
-class CrabletEventsAppender(private val client: Pool) : EventsAppender {
-
-    override suspend fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): SequenceNumber {
+class CrabletEventsAppender(
+    private val client: Pool,
+) : EventsAppender {
+    override suspend fun appendIf(
+        events: List<JsonObject>,
+        appendCondition: AppendCondition,
+    ): SequenceNumber {
         val promise = Promise.promise<SequenceNumber>()
 
-        client.withTransaction { connection ->
-            val params = prepareQueryParams(appendCondition, events)
-            executeQuery(connection, params)
-        }
-            .onSuccess { rowSet -> processRowSet(rowSet, promise) }
+        client
+            .withTransaction { connection ->
+                val params = prepareQueryParams(appendCondition, events)
+                executeQuery(connection, params)
+            }.onSuccess { rowSet -> processRowSet(rowSet, promise) }
             .onFailure { throwable -> promise.fail(throwable) }
 
         return promise.future().coAwait()
     }
 
-    private fun prepareQueryParams(appendCondition: AppendCondition, events: List<JsonObject>) =
-        Tuple.of(
-            identifiersToSortedArray(appendCondition.transactionContext.identifiers),
-            appendCondition.expectedCurrentSequence.value,
-            eventTypesToArray(appendCondition.transactionContext.eventTypes),
-            eventPayloadsToArray(events)
-        )
+    private fun prepareQueryParams(
+        appendCondition: AppendCondition,
+        events: List<JsonObject>,
+    ) = Tuple.of(
+        identifiersToSortedArray(appendCondition.transactionContext.identifiers),
+        appendCondition.expectedCurrentSequence.value,
+        eventTypesToArray(appendCondition.transactionContext.eventTypes),
+        eventPayloadsToArray(events),
+    )
 
     private fun identifiersToSortedArray(identifiers: List<DomainIdentifier>) =
         identifiers.map(DomainIdentifier::toStorageFormat).sorted().toTypedArray()
@@ -45,11 +51,18 @@ class CrabletEventsAppender(private val client: Pool) : EventsAppender {
 
     private fun eventPayloadsToArray(events: List<JsonObject>) = events.map(JsonObject::encode).toTypedArray()
 
-    private fun executeQuery(connection: SqlConnection, params: Tuple): Future<RowSet<Row>> =
-        connection.preparedQuery("SELECT append_events($1, $2, $3, $4) AS $LAST_SEQUENCE_ID")
+    private fun executeQuery(
+        connection: SqlConnection,
+        params: Tuple,
+    ): Future<RowSet<Row>> =
+        connection
+            .preparedQuery("SELECT append_events($1, $2, $3, $4) AS $LAST_SEQUENCE_ID")
             .execute(params)
 
-    private fun processRowSet(rowSet: RowSet<Row>, promise: Promise<SequenceNumber>) {
+    private fun processRowSet(
+        rowSet: RowSet<Row>,
+        promise: Promise<SequenceNumber>,
+    ) {
         val firstRowSequenceId = rowSet.first()?.getLong(LAST_SEQUENCE_ID)
 
         if (firstRowSequenceId != null && rowSet.rowCount() == 1) {
