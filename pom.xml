@@ -55,12 +55,6 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.36</version>
         </dependency>
-        <!-- SLF4J binding to Logback -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.4.12</version>
-        </dependency>
 
         <!-- Vertx JUnit5 Integration -->
         <dependency>
@@ -68,13 +62,21 @@
             <artifactId>vertx-junit5</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-test -->
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-test</artifactId>
             <version>1.10.1</version>
             <type>pom</type>
+            <scope>test</scope>
         </dependency>
+        <!-- SLF4J binding to Logback -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.12</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.ongres.scram</groupId>
             <artifactId>scram-client</artifactId>
