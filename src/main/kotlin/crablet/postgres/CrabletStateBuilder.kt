@@ -18,7 +18,7 @@ class CrabletStateBuilder(
 ) : StateBuilder {
     override suspend fun <S> buildFor(
         transactionContext: TransactionContext,
-        initialState: () -> S,
+        initialStateFunction: () -> S,
         evolveFunction: (S, JsonObject) -> S,
     ): Pair<S, SequenceNumber> {
         val promise = Promise.promise<Pair<S, SequenceNumber>>()
@@ -30,7 +30,7 @@ class CrabletStateBuilder(
                 .toTypedArray()
         val eventTypes = transactionContext.eventTypes.map { it.value }.toTypedArray()
         val tuple = Tuple.of(domainIds, eventTypes)
-        var finalState = initialState.invoke()
+        var finalState = initialStateFunction.invoke()
         var lastSequence = 0L
         var error: RuntimeException? = null
 

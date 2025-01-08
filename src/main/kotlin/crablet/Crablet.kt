@@ -52,7 +52,7 @@ interface EventsAppender {
 interface StateBuilder {
     suspend fun <S> buildFor(
         transactionContext: TransactionContext,
-        initialState: () -> S,
+        initialStateFunction: () -> S,
         evolveFunction: (S, JsonObject) -> S,
     ): Pair<S, SequenceNumber>
 }
