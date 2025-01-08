@@ -8,6 +8,7 @@ import crablet.SequenceNumber
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
+import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
@@ -16,16 +17,17 @@ import io.vertx.sqlclient.Tuple
 
 class CrabletEventsAppender(private val client: Pool) : EventsAppender {
 
-    override fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): Future<SequenceNumber> {
+    override suspend fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): SequenceNumber {
         val promise = Promise.promise<SequenceNumber>()
 
         client.withTransaction { connection ->
             val params = prepareQueryParams(appendCondition, events)
             executeQuery(connection, params)
-        }.onSuccess { rowSet -> processRowSet(rowSet, promise) }
+        }
+            .onSuccess { rowSet -> processRowSet(rowSet, promise) }
             .onFailure { throwable -> promise.fail(throwable) }
 
-        return promise.future()
+        return promise.future().coAwait()
     }
 
     private fun prepareQueryParams(appendCondition: AppendCondition, events: List<JsonObject>) =
@@ -48,9 +50,9 @@ class CrabletEventsAppender(private val client: Pool) : EventsAppender {
             .execute(params)
 
     private fun processRowSet(rowSet: RowSet<Row>, promise: Promise<SequenceNumber>) {
-        val firstRowSequenceId = rowSet.first().getLong(LAST_SEQUENCE_ID)
+        val firstRowSequenceId = rowSet.first()?.getLong(LAST_SEQUENCE_ID)
 
-        if (rowSet.rowCount() == 1 && firstRowSequenceId != null) {
+        if (firstRowSequenceId != null && rowSet.rowCount() == 1) {
             promise.complete(SequenceNumber(firstRowSequenceId))
         } else {
             promise.fail("No last_sequence_id returned from append_events function")

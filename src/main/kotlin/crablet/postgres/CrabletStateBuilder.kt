@@ -3,9 +3,9 @@ package crablet.postgres
 import crablet.SequenceNumber
 import crablet.StateBuilder
 import crablet.TransactionContext
-import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
+import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowStream
@@ -14,21 +14,21 @@ import org.slf4j.LoggerFactory
 
 class CrabletStateBuilder<S>(
     private val client: Pool,
-    private val initialState: S,
+    private val initialState: () -> S,
     private val evolveFunction: (S, JsonObject) -> S,
     private val pageSize: Int = 1000,
 ) : StateBuilder<S> {
 
-    override fun buildFor(
+    override suspend fun buildFor(
         transactionContext: TransactionContext,
-    ): Future<Pair<S, SequenceNumber>> {
+    ): Pair<S, SequenceNumber> {
 
         val promise = Promise.promise<Pair<S, SequenceNumber>>()
         val sql = sqlQuery()
         val domainIds = transactionContext.identifiers.map { it.toStorageFormat() }.sorted().toTypedArray()
         val eventTypes = transactionContext.eventTypes.map { it.value }.toTypedArray()
         val tuple = Tuple.of(domainIds, eventTypes)
-        var finalState = initialState
+        var finalState = initialState.invoke()
         var lastSequence = 0L
         var error: RuntimeException? = null
 
@@ -58,11 +58,8 @@ class CrabletStateBuilder<S>(
                                 // Close the stream to release the resources in the database
                                 stream
                                     .close()
-                                    .onComplete {
+                                    .compose {
                                         tx.commit()
-                                            .onComplete {
-                                                logger.debug("End of stream")
-                                            }
                                     }
                             }
                             stream.handler { row: Row ->
@@ -74,7 +71,7 @@ class CrabletStateBuilder<S>(
                         }
                 }
         }
-        return promise.future()
+        return promise.future().coAwait()
     }
 
     private fun sqlQuery(): String {

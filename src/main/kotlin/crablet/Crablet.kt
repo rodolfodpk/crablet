@@ -1,6 +1,5 @@
 package crablet
 
-import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 
 @JvmInline
@@ -26,12 +25,12 @@ data class AppendCondition(val transactionContext: TransactionContext, val expec
 // write
 
 interface EventsAppender {
-    fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): Future<SequenceNumber>
+    suspend fun appendIf(events: List<JsonObject>, appendCondition: AppendCondition): SequenceNumber
 }
 
 // read
 
 interface StateBuilder<S> {
-    fun buildFor(transactionContext: TransactionContext): Future<Pair<S, SequenceNumber>>
+    suspend fun buildFor(transactionContext: TransactionContext): Pair<S, SequenceNumber>
 }
 

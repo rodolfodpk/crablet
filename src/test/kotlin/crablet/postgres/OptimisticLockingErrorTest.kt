@@ -7,27 +7,31 @@ import crablet.SequenceNumber
 import crablet.StateId
 import crablet.StateName
 import crablet.TransactionContext
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.vertx.core.json.JsonObject
-import io.vertx.junit5.VertxExtension
-import io.vertx.junit5.VertxTestContext
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(VertxExtension::class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class OptimisticLockingErrorTest : AbstractCrabletTest() {
 
+    @AfterEach
+    fun log() {
+        dumpEvents()
+    }
+
     @Test
     @Order(1)
-    fun `it can open Account 1 with $100`(testContext: VertxTestContext) {
+    fun `it can open Account 1 with $100`() = runTest {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
@@ -39,30 +43,18 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             JsonObject().put("type", "AmountDeposited").put("amount", 50),
             JsonObject().put("type", "AmountDeposited").put("amount", 50)
         )
-        eventsAppender.appendIf(eventsToAppend, appendCondition)
-            .compose {
-                dumpEvents()
-            }
-            .compose {
-                stateBuilder.buildFor(transactionContext)
-            }
-            .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
-                testContext.verify {
-                    sequence.value shouldBeExactly 3L
-                    state.id shouldBe 1
-                    state.balance shouldBeExactly 100
-                }
-                testContext.completeNow()
-            }
-            .onFailure { it ->
-                testContext.failNow(it)
-            }
+        val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
+        sequence.value shouldBeExactly 3L
 
+        val (state, seq) = stateBuilder.buildFor(transactionContext)
+        seq.value shouldBeExactly 3L
+        state.id shouldBe 1
+        state.balance shouldBeExactly 100
     }
 
     @Test
     @Order(2)
-    fun `it will fail if expectedCurrentSequence does not match`(testContext: VertxTestContext) {
+    fun `it will fail if expectedCurrentSequence does not match`() = runTest {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
@@ -72,41 +64,27 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
         val eventsToAppend = listOf(
             JsonObject().put("type", "AmountDeposited").put("amount", 60)
         )
-        eventsAppender.appendIf(eventsToAppend, appendCondition)
-            .onSuccess {
-                testContext.failNow("It should fail")
-            }
-            .onFailure {
-                testContext.verify {
-                    it.message shouldContain
-                            "Sequence mismatch: the current last sequence 3 from the database does not match the expected sequence: 2."
-                }
-                testContext.completeNow()
-            }
+        val exception = shouldThrow<Exception> {
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
+        }
+        exception.message shouldContain "Sequence mismatch: the current last sequence 3 from the database does not match the expected sequence: 2."
     }
 
     @Test
-    @Order(8)
-    fun `Account 1 state is intact`(testContext: VertxTestContext) {
+    @Order(3)
+    fun `Account 1 state is intact`() = runTest {
         val transactionContext = TransactionContext(
             identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
             eventTypes = eventTypes
         )
-        stateBuilder.buildFor(transactionContext)
-            .onSuccess { (state, sequence): Pair<Account, SequenceNumber> ->
-                testContext.verify {
-                    sequence.value shouldBeExactly 3L
-                    state.id shouldBe 1
-                    state.balance shouldBeExactly 100
-                }
-                testContext.completeNow()
-            }
-            .onFailure { it ->
-                testContext.failNow(it)
-            }
+        val (state, sequence) = stateBuilder.buildFor(transactionContext)
+        sequence.value shouldBeExactly 3L
+        state.id shouldBe 1
+        state.balance shouldBeExactly 100
     }
 
     companion object {
+
         lateinit var eventsAppender: CrabletEventsAppender
         lateinit var stateBuilder: CrabletStateBuilder<Account>
 
@@ -138,15 +116,16 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
 
         @BeforeAll
         @JvmStatic
-        fun setUp(testContext: VertxTestContext) {
+        fun setUp() {
             eventsAppender = CrabletEventsAppender(pool)
             stateBuilder = CrabletStateBuilder(
                 client = pool,
-                initialState = Account(),
+                initialState = { Account() },
                 evolveFunction = evolveFunction
             )
-            cleanDatabase().onSuccess { testContext.completeNow() }
+            cleanDatabase()
         }
+
     }
 
 }
