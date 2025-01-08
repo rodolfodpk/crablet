@@ -99,10 +99,10 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
         }
 
     companion object {
-        lateinit var eventsAppender: CrabletEventsAppender
-        lateinit var testRepository: TestRepository
+        private lateinit var eventsAppender: CrabletEventsAppender
+        private lateinit var testRepository: TestRepository
 
-        val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
+        private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
 
         @BeforeAll
         @JvmStatic

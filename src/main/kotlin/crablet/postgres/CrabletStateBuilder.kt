@@ -12,13 +12,15 @@ import io.vertx.sqlclient.RowStream
 import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
-class CrabletStateBuilder<S>(
+class CrabletStateBuilder(
     private val client: Pool,
-    private val initialState: () -> S,
-    private val evolveFunction: (S, JsonObject) -> S,
     private val pageSize: Int = 1000,
-) : StateBuilder<S> {
-    override suspend fun buildFor(transactionContext: TransactionContext): Pair<S, SequenceNumber> {
+) : StateBuilder {
+    override suspend fun <S> buildFor(
+        transactionContext: TransactionContext,
+        initialState: () -> S,
+        evolveFunction: (S, JsonObject) -> S,
+    ): Pair<S, SequenceNumber> {
         val promise = Promise.promise<Pair<S, SequenceNumber>>()
         val sql = sqlQuery()
         val domainIds =

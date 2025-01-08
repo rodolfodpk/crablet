@@ -7,6 +7,8 @@ import crablet.SequenceNumber
 import crablet.StateId
 import crablet.StateName
 import crablet.TransactionContext
+import crablet.postgres.TestAccountDomain.evolveFunction
+import crablet.postgres.TestAccountDomain.initialStateFunction
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
@@ -46,7 +48,11 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 3L
 
-            val (state, seq) = stateBuilder.buildFor(transactionContextAcct1)
+            val (state, seq) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct1,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction
+            )
             seq.value shouldBeExactly 3L
             state.id shouldBe 1
             state.balance shouldBeExactly 100
@@ -77,61 +83,30 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
     @Order(3)
     fun `Account 1 state is intact`() =
         runTest {
-            val (state, sequence) = stateBuilder.buildFor(transactionContextAcct1)
+            val (state, sequence) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct1,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction
+            )
             sequence.value shouldBeExactly 3L
             state.id shouldBe 1
             state.balance shouldBeExactly 100
         }
 
     companion object {
-        lateinit var eventsAppender: CrabletEventsAppender
-        lateinit var stateBuilder: CrabletStateBuilder<Account>
-
-        data class Account(
-            val id: Int? = null,
-            val balance: Int = 0,
-        )
-
-        val transactionContextAcct1 =
+        private lateinit var eventsAppender: CrabletEventsAppender
+        private lateinit var stateBuilder: CrabletStateBuilder
+        private val transactionContextAcct1 =
             TransactionContext(
                 identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
                 eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) },
             )
 
-        private val evolveFunction: (Account, JsonObject) -> Account = { state, event ->
-            when (event.getString("type")) {
-                "AccountOpened" -> state.copy(id = event.getInteger("id"))
-                "AmountDeposited" -> state.copy(balance = state.balance.plus(event.getInteger("amount")))
-                "AmountTransferred" -> {
-                    when {
-                        event.getInteger("fromAcct") == state.id ->
-                            state.copy(
-                                balance = state.balance.minus(event.getInteger("amount")),
-                            )
-
-                        event.getInteger("toAcct") == state.id ->
-                            state.copy(
-                                balance = state.balance.plus(event.getInteger("amount")),
-                            )
-
-                        else -> state
-                    }
-                }
-
-                else -> state
-            }
-        }
-
         @BeforeAll
         @JvmStatic
         fun setUp() {
             eventsAppender = CrabletEventsAppender(pool)
-            stateBuilder =
-                CrabletStateBuilder(
-                    client = pool,
-                    initialState = { Account() },
-                    evolveFunction = evolveFunction,
-                )
+            stateBuilder = CrabletStateBuilder(client = pool)
             cleanDatabase()
         }
     }

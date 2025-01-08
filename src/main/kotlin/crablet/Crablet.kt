@@ -49,6 +49,10 @@ interface EventsAppender {
     ): SequenceNumber
 }
 
-interface StateBuilder<S> {
-    suspend fun buildFor(transactionContext: TransactionContext): Pair<S, SequenceNumber>
+interface StateBuilder {
+    suspend fun <S> buildFor(
+        transactionContext: TransactionContext,
+        initialState: () -> S,
+        evolveFunction: (S, JsonObject) -> S,
+    ): Pair<S, SequenceNumber>
 }

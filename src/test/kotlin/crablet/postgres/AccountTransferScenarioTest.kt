@@ -7,6 +7,8 @@ import crablet.SequenceNumber
 import crablet.StateId
 import crablet.StateName
 import crablet.TransactionContext
+import crablet.postgres.TestAccountDomain.evolveFunction
+import crablet.postgres.TestAccountDomain.initialStateFunction
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
@@ -44,7 +46,10 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 3L
 
-            val (state, seq) = stateBuilder.buildFor(transactionContextAcct1)
+            val (state, seq) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct1,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction)
             seq.value shouldBeExactly 3L
             state.id shouldBe 1
             state.balance shouldBeExactly 100
@@ -66,7 +71,10 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 4L
 
-            val (state, seq) = stateBuilder.buildFor(transactionContextAcct2)
+            val (state, seq) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct2,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction)
             seq.value shouldBeExactly sequence.value
             state.id shouldBe 2
             state.balance shouldBeExactly 0
@@ -99,13 +107,19 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 5L
 
-            val (state1, seq1) = stateBuilder.buildFor(transactionContextAcct1)
+            val (state1, seq1) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct1,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction)
 
             seq1.value shouldBeExactly sequence.value
             state1.id shouldBe 1
             state1.balance shouldBeExactly 70
 
-            val (state2, seq2) = stateBuilder.buildFor(transactionContextAcct2)
+            val (state2, seq2) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct2,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction)
 
             seq2.value shouldBeExactly sequence.value
             state2.id shouldBe 2
@@ -139,13 +153,19 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 6L
 
-            val (state1, seq1) = stateBuilder.buildFor(transactionContextAcct1)
+            val (state1, seq1) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct1,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction)
 
             seq1.value shouldBeExactly sequence.value
             state1.id shouldBe 1
             state1.balance shouldBeExactly 80
 
-            val (state2, seq2) = stateBuilder.buildFor(transactionContextAcct2)
+            val (state2, seq2) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct2,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction)
 
             seq2.value shouldBeExactly sequence.value
             state2.id shouldBe 2
@@ -179,13 +199,19 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 7L
 
-            val (state1, seq1) = stateBuilder.buildFor(transactionContextAcct1)
+            val (state1, seq1) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct1,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction)
 
             seq1.value shouldBeExactly sequence.value
             state1.id shouldBe 1
             state1.balance shouldBeExactly 81
 
-            val (state2, seq2) = stateBuilder.buildFor(transactionContextAcct2)
+            val (state2, seq2) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct2,
+                initialState = initialStateFunction,
+                evolveFunction = evolveFunction)
 
             seq2.value shouldBeExactly sequence.value
             state2.id shouldBe 2
@@ -193,62 +219,28 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         }
 
     companion object {
-        lateinit var eventsAppender: CrabletEventsAppender
-        lateinit var stateBuilder: CrabletStateBuilder<Account>
+        private lateinit var eventsAppender: CrabletEventsAppender
+        private lateinit var stateBuilder: CrabletStateBuilder
 
-        data class Account(
-            val id: Int? = null,
-            val balance: Int = 0,
-        )
+        private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
 
-        val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
-
-        val transactionContextAcct1 =
+        private val transactionContextAcct1 =
             TransactionContext(
                 identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
                 eventTypes = eventTypes,
             )
 
-        val transactionContextAcct2 =
+        private val transactionContextAcct2 =
             TransactionContext(
                 identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
                 eventTypes = eventTypes,
             )
 
-        private val evolveFunction: (Account, JsonObject) -> Account = { state, event ->
-            when (event.getString("type")) {
-                "AccountOpened" -> state.copy(id = event.getInteger("id"))
-                "AmountDeposited" -> state.copy(balance = state.balance.plus(event.getInteger("amount")))
-                "AmountTransferred" -> {
-                    when {
-                        event.getInteger("fromAcct") == state.id ->
-                            state.copy(
-                                balance = state.balance.minus(event.getInteger("amount")),
-                            )
-
-                        event.getInteger("toAcct") == state.id ->
-                            state.copy(
-                                balance = state.balance.plus(event.getInteger("amount")),
-                            )
-
-                        else -> state
-                    }
-                }
-
-                else -> state
-            }
-        }
-
         @BeforeAll
         @JvmStatic
         fun setUp() {
             eventsAppender = CrabletEventsAppender(pool)
-            stateBuilder =
-                CrabletStateBuilder(
-                    client = pool,
-                    initialState = { Account() },
-                    evolveFunction = evolveFunction,
-                )
+            stateBuilder = CrabletStateBuilder(client = pool)
             cleanDatabase()
         }
     }

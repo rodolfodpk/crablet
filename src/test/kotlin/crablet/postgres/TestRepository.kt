@@ -1,6 +1,5 @@
 package crablet.postgres
 
-import io.vertx.core.Future
 import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
