@@ -40,8 +40,8 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             val eventsToAppend =
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 1),
-                    JsonObject().put("type", "AmountDeposited").put("amount", 50),
-                    JsonObject().put("type", "AmountDeposited").put("amount", 50),
+                    JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 50),
+                    JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 100),
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 3L

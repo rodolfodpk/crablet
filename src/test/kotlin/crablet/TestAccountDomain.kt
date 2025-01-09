@@ -11,10 +11,9 @@ object TestAccountDomain {
     val initialStateFunction = { Account() }
 
     val evolveFunction: (Account, JsonObject) -> Account = { state, event ->
-        println(event.encodePrettily())
         when (event.getString("type")) {
             "AccountOpened" -> state.copy(id = event.getInteger("id"))
-            "AmountDeposited" -> state.copy(balance = state.balance.plus(event.getInteger("amount")))
+            "AmountDeposited" -> state.copy(balance = event.getInteger("balance"))
             "AmountTransferred" -> {
                 when {
                     event.getInteger("fromAcct") == state.id ->
