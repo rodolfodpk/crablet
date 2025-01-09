@@ -49,7 +49,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             val (state, seq) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct1,
                 initialStateFunction = initialStateFunction,
-                evolveFunction = evolveFunction
+                onEventFunction = evolveFunction
             )
             seq.value shouldBeExactly 3L
             state.id shouldBe 1
@@ -84,7 +84,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             val (state, sequence) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct1,
                 initialStateFunction = initialStateFunction,
-                evolveFunction = evolveFunction
+                onEventFunction = evolveFunction
             )
             sequence.value shouldBeExactly 3L
             state.id shouldBe 1

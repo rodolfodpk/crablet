@@ -13,7 +13,6 @@ data class SubscriptionSource(
 class SubscriptionConfig(
     val source: SubscriptionSource,
     val eventEffectFunction: (sqlConnection: SqlConnection, eventAsJson: JsonObject) -> JsonObject,
-    val viewEffectFunction: ((viewAsJson: JsonObject) -> Void)? = null,
 )
 
 data class IntervalConfig(
@@ -36,5 +35,5 @@ interface SubscriptionsContainer {
         intervalConfig: IntervalConfig = IntervalConfig(),
     )
 
-    suspend fun start()
+    suspend fun deployAll()
 }

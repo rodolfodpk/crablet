@@ -11,12 +11,11 @@ import java.util.concurrent.atomic.AtomicLong
 
 class SubscriptionVerticle(
     private val subscriptionConfig: SubscriptionConfig,
+    private val subscriptionComponent: SubscriptionComponent,
     private val intervalConfig: IntervalConfig,
-    private val subscriptionDao: SubscriptionDao,
 ) : CoroutineVerticle() {
-    private val logger =
-        LoggerFactory
-            .getLogger("${SubscriptionVerticle::class.java.simpleName}-${subscriptionConfig.source.name}")
+    private val name = "${SubscriptionVerticle::class.java.simpleName}-${subscriptionConfig.source.name}"
+    private val logger = LoggerFactory.getLogger(name)
 
     private val greedy = AtomicBoolean(false)
     private val failures = AtomicLong(0L)
@@ -58,7 +57,7 @@ class SubscriptionVerticle(
             logger.trace("Scanning for new events for subscription {}", subscriptionConfig.source.name)
         }
 //        try {
-//            subscriptionDao.scanPendingEvents(1000)
+//            subscriptionComponent.scanPendingEvents(1000)
 //        }
     }
 

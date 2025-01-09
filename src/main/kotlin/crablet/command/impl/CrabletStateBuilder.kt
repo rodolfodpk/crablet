@@ -19,7 +19,7 @@ class CrabletStateBuilder(
     override suspend fun <S> buildFor(
         transactionContext: TransactionContext,
         initialStateFunction: () -> S,
-        evolveFunction: (S, JsonObject) -> S,
+        onEventFunction: (S, JsonObject) -> S,
     ): Pair<S, SequenceNumber> {
         val promise = Promise.promise<Pair<S, SequenceNumber>>()
         val sql = sqlQuery()
@@ -67,7 +67,7 @@ class CrabletStateBuilder(
                             stream.handler { row: Row ->
                                 val jsonObject = row.getJsonObject("event_payload")
                                 lastSequence = row.getLong("sequence_id")
-                                finalState = evolveFunction.invoke(finalState, jsonObject)
+                                finalState = onEventFunction.invoke(finalState, jsonObject)
                                 logger.debug("Event: {} -> {}", lastSequence, jsonObject)
                             }
                         }

@@ -45,6 +45,6 @@ interface StateBuilder {
     suspend fun <S> buildFor(
         transactionContext: TransactionContext,
         initialStateFunction: () -> S,
-        evolveFunction: (S, JsonObject) -> S,
+        onEventFunction: (S, JsonObject) -> S,
     ): Pair<S, SequenceNumber>
 }
