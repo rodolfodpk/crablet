@@ -23,38 +23,22 @@ class SubscriptionVerticle(
     private val backOff = AtomicLong(0L)
     private val isPaused = AtomicBoolean(false)
     private val isBusy = AtomicBoolean(false)
-    private var currentOffset = 0L
+    private var lastSequenceId = 0L
 
     override suspend fun start() {
-        TODO()
+        vertx.setTimer(intervalConfig.initialInterval, handler)
         super.start()
     }
 
     private val handler: (Long) -> Unit = { timerId ->
-        println("Timer $timerId has been fired!")
+        if (logger.isTraceEnabled) {
+            logger.trace("Timer $timerId has been fired!")
+        }
         if (isBusy.get() || isPaused.get()) {
             justReschedule()
         } else {
-            isBusy.set(true)
-            action()
+            proceed()
         }
-    }
-
-    private fun action(): Future<Void> {
-        if (logger.isTraceEnabled) {
-            logger.trace("Scanning for new events for subscription {}", subscriptionConfig.source.name)
-        }
-        return subscriptionComponent
-            .handlePendingEvents(subscriptionConfig)
-            .onSuccess { (sequenceId, howManyRows) ->
-                if (howManyRows == 0) {
-                    registerNoNewEvents()
-                } else {
-                    registerSuccess(sequenceId)
-                }
-            }.onFailure {
-                registerFailure(it)
-            }.mapEmpty()
     }
 
     private fun justReschedule() {
@@ -67,6 +51,28 @@ class SubscriptionVerticle(
         }
     }
 
+    private fun proceed(): Future<Void> {
+        isBusy.set(true)
+        if (logger.isTraceEnabled) {
+            logger.trace(
+                "Scanning for new events for subscription {}. Last sequence {}",
+                subscriptionConfig.source.name,
+                lastSequenceId,
+            )
+        }
+        return subscriptionComponent
+            .handlePendingEvents(subscriptionConfig)
+            .onSuccess { (sequenceId, howManyNewEvents) ->
+                if (howManyNewEvents == 0) {
+                    registerNoNewEvents()
+                } else {
+                    registerSuccess(sequenceId)
+                }
+            }.onFailure {
+                registerFailure(it)
+            }.mapEmpty()
+    }
+
     private fun registerNoNewEvents() {
         greedy.set(false)
         val jitter = intervalConfig.jitterFunction.invoke()
@@ -76,7 +82,7 @@ class SubscriptionVerticle(
     }
 
     private fun registerSuccess(eventSequence: Long) {
-        currentOffset = eventSequence
+        lastSequenceId = eventSequence
         failures.set(0)
         backOff.set(0)
         val nextInterval = if (greedy.get()) GREED_INTERVAL else intervalConfig.interval
