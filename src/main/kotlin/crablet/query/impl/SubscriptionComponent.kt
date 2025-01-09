@@ -1,6 +1,6 @@
-package crablet.lab.query.impl
+package crablet.query.impl
 
-import crablet.lab.query.SubscriptionConfig
+import crablet.query.SubscriptionConfig
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Pool

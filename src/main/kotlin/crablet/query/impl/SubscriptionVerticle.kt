@@ -1,7 +1,7 @@
-package crablet.lab.query.impl
+package crablet.query.impl
 
-import crablet.lab.query.IntervalConfig
-import crablet.lab.query.SubscriptionConfig
+import crablet.query.IntervalConfig
+import crablet.query.SubscriptionConfig
 import io.vertx.core.Future
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import org.slf4j.LoggerFactory

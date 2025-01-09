@@ -1,4 +1,4 @@
-package crablet.lab.query
+package crablet.query
 
 import crablet.EventName
 import io.vertx.core.json.JsonObject

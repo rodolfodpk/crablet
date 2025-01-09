@@ -6,12 +6,12 @@ import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
 import crablet.command.AppendCondition
-import crablet.command.impl.CrabletEventsAppender
-import crablet.command.impl.CrabletStateBuilder
 import crablet.command.DomainIdentifier
 import crablet.command.StateId
 import crablet.command.StateName
 import crablet.command.TransactionContext
+import crablet.command.impl.CrabletEventsAppender
+import crablet.command.impl.CrabletStateBuilder
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
@@ -43,8 +43,8 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             val eventsToAppend =
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 1),
-                    JsonObject().put("type", "AmountDeposited").put("amount", 50),
-                    JsonObject().put("type", "AmountDeposited").put("amount", 50),
+                    JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 50),
+                    JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 100),
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 3L
@@ -105,7 +105,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                         .put("type", "AmountTransferred")
                         .put("fromAcct", 1)
                         .put("toAcct", 2)
-                        .put("amount", 30),
+                        .put("amount", 30)
+                        .put("fromAcctBalance", 70)
+                        .put("toAcctBalance", 30)
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 5L
@@ -151,7 +153,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                         .put("type", "AmountTransferred")
                         .put("fromAcct", 2)
                         .put("toAcct", 1)
-                        .put("amount", 10),
+                        .put("amount", 10)
+                        .put("fromAcctBalance", 20)
+                        .put("toAcctBalance", 80)
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 6L
@@ -197,7 +201,9 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                         .put("type", "AmountTransferred")
                         .put("fromAcct", 2)
                         .put("toAcct", 1)
-                        .put("amount", 1),
+                        .put("amount", 1)
+                        .put("fromAcctBalance", 19)
+                        .put("toAcctBalance", 81)
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 7L

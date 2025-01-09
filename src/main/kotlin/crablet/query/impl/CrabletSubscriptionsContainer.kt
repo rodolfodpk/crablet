@@ -1,8 +1,9 @@
-package crablet.lab.query.impl
+package crablet.query.impl
 
-import crablet.lab.query.IntervalConfig
-import crablet.lab.query.SubscriptionConfig
-import crablet.lab.query.SubscriptionsContainer
+import crablet.query.IntervalConfig
+import crablet.query.SubscriptionConfig
+import crablet.query.SubscriptionsContainer
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.sqlclient.Pool
 
@@ -22,6 +23,7 @@ class CrabletSubscriptionsContainer(
 
     override suspend fun deployAll() {
         val subscriptionComponent = SubscriptionComponent(client)
+        val deploymentOptions = DeploymentOptions().setInstances(1)
         subscriptions.values
             .map { (subscriptionConfig, intervalConfig) ->
                 Pair(
@@ -33,7 +35,7 @@ class CrabletSubscriptionsContainer(
                     ),
                 )
             }.map { (subscriptionName, verticle) ->
-                Pair(subscriptionName, vertx.deployVerticle(verticle).await())
+                Pair(subscriptionName, vertx.deployVerticle(verticle, deploymentOptions).await())
             }.map { (subscriptionName, deployId) -> deployIds.put(subscriptionName, deployId) }
     }
 }
