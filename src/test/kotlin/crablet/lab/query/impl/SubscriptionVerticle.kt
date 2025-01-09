@@ -2,12 +2,13 @@ package crablet.lab.query.impl
 
 import crablet.lab.query.IntervalConfig
 import crablet.lab.query.SubscriptionConfig
-import io.vertx.core.Handler
+import io.vertx.core.Future
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.min
 
 class SubscriptionVerticle(
     private val subscriptionConfig: SubscriptionConfig,
@@ -25,20 +26,39 @@ class SubscriptionVerticle(
     private var currentOffset = 0L
 
     override suspend fun start() {
+        TODO()
         super.start()
     }
 
-    private fun run() {
+    private val handler: (Long) -> Unit = { timerId ->
+        println("Timer $timerId has been fired!")
         if (isBusy.get() || isPaused.get()) {
             justReschedule()
-            return
+        } else {
+            isBusy.set(true)
+            action()
         }
-        isBusy.set(true)
-        // TODO
+    }
+
+    private fun action(): Future<Void> {
+        if (logger.isTraceEnabled) {
+            logger.trace("Scanning for new events for subscription {}", subscriptionConfig.source.name)
+        }
+        return subscriptionComponent
+            .handlePendingEvents(subscriptionConfig)
+            .onSuccess { (sequenceId, howManyRows) ->
+                if (howManyRows == 0) {
+                    registerNoNewEvents()
+                } else {
+                    registerSuccess(sequenceId)
+                }
+            }.onFailure {
+                registerFailure(it)
+            }.mapEmpty()
     }
 
     private fun justReschedule() {
-        vertx.setTimer(intervalConfig.interval, handler())
+        vertx.setTimer(intervalConfig.interval, handler)
         if (logger.isTraceEnabled) {
             logger.trace("It is busy=$isBusy or paused=$isPaused. Will just reschedule.")
         }
@@ -47,18 +67,29 @@ class SubscriptionVerticle(
         }
     }
 
-    private fun handler(): Handler<Long> =
-        Handler<Long> {
-            action()
-        }
+    private fun registerNoNewEvents() {
+        greedy.set(false)
+        val jitter = intervalConfig.jitterFunction.invoke()
+        val nextInterval = min(intervalConfig.maxInterval, intervalConfig.interval * backOff.incrementAndGet() + jitter)
+        vertx.setTimer(nextInterval, handler)
+        if (logger.isTraceEnabled) logger.trace("registerNoNewEvents - Rescheduled to next {} milliseconds", nextInterval)
+    }
 
-    private fun action() {
-        if (logger.isTraceEnabled) {
-            logger.trace("Scanning for new events for subscription {}", subscriptionConfig.source.name)
-        }
-//        try {
-//            subscriptionComponent.scanPendingEvents(1000)
-//        }
+    private fun registerSuccess(eventSequence: Long) {
+        currentOffset = eventSequence
+        failures.set(0)
+        backOff.set(0)
+        val nextInterval = if (greedy.get()) GREED_INTERVAL else intervalConfig.interval
+        vertx.setTimer(nextInterval, handler)
+        if (logger.isTraceEnabled) logger.trace("registerSuccess - Rescheduled to next {} milliseconds", nextInterval)
+    }
+
+    private fun registerFailure(throwable: Throwable) {
+        greedy.set(false)
+        val jitter = intervalConfig.jitterFunction.invoke()
+        val nextInterval = min(intervalConfig.maxInterval, (intervalConfig.interval * failures.incrementAndGet()) + jitter)
+        vertx.setTimer(nextInterval, handler)
+        logger.error("registerFailure - Rescheduled to next {} milliseconds", nextInterval, throwable)
     }
 
     companion object {

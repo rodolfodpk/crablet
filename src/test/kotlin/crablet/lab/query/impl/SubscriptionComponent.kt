@@ -3,7 +3,6 @@ package crablet.lab.query.impl
 import crablet.lab.query.SubscriptionConfig
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
-import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
@@ -11,17 +10,17 @@ import io.vertx.sqlclient.Tuple
 class SubscriptionComponent(
     private val client: Pool,
 ) {
-    suspend fun handlePendingEvents(subscriptionConfig: SubscriptionConfig) {
+    fun handlePendingEvents(subscriptionConfig: SubscriptionConfig): Future<Pair<Long, Int>> {
         fun updateOffset(
             sqlConnection: SqlConnection,
             newSequenceId: Long,
-        ): Future<Void> =
+        ): Future<Long> =
             sqlConnection
                 .preparedQuery(SQL_UPDATE_OFFSET)
                 .execute(Tuple.of(subscriptionConfig.source.name, newSequenceId))
-                .mapEmpty()
+                .map { newSequenceId }
 
-        client
+        return client
             .withTransaction { tx ->
                 tx
                     .preparedQuery(SQL_EVENTS_QUERY)
@@ -32,9 +31,17 @@ class SubscriptionComponent(
                             Pair(eventJson, subscriptionConfig.eventEffectFunction.invoke(tx, eventJson))
                         }
                     }.compose { pairList: List<Pair<JsonObject, JsonObject>> ->
-                        pairList.last().first.let { updateOffset(tx, it.getLong("sequence_id")) }
+                        if (pairList.isNotEmpty()) {
+                            pairList
+                                .last()
+                                .first
+                                .let { updateOffset(tx, it.getLong("sequence_id")) }
+                                .map { Pair(it, pairList.size) }
+                        } else {
+                            Future.succeededFuture(Pair(0L, 0))
+                        }
                     }
-            }.coAwait()
+            }
     }
 
     companion object {

@@ -21,6 +21,7 @@ class CrabletSubscriptionsContainer(
     }
 
     override suspend fun deployAll() {
+        val subscriptionComponent = SubscriptionComponent(client)
         subscriptions.values
             .map { (subscriptionConfig, intervalConfig) ->
                 Pair(
@@ -28,11 +29,11 @@ class CrabletSubscriptionsContainer(
                     SubscriptionVerticle(
                         subscriptionConfig = subscriptionConfig,
                         intervalConfig = intervalConfig,
-                        subscriptionComponent = SubscriptionComponent(client),
+                        subscriptionComponent = subscriptionComponent,
                     ),
                 )
-            }.map { (name, verticle) ->
-                Pair(name, vertx.deployVerticle(verticle).await())
-            }.map { pair: Pair<String, String> -> deployIds.put(pair.first, pair.second)!! }
+            }.map { (subscriptionName, verticle) ->
+                Pair(subscriptionName, vertx.deployVerticle(verticle).await())
+            }.map { (subscriptionName, deployId) -> deployIds.put(subscriptionName, deployId) }
     }
 }
