@@ -6,7 +6,6 @@ import crablet.command.AppendCondition
 import crablet.command.DomainIdentifier
 import crablet.command.EventsAppender
 import io.vertx.core.Future
-import io.vertx.core.Promise
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool
@@ -21,18 +20,13 @@ class CrabletEventsAppender(
     override suspend fun appendIf(
         events: List<JsonObject>,
         appendCondition: AppendCondition,
-    ): SequenceNumber {
-        val promise = Promise.promise<SequenceNumber>()
-
+    ): SequenceNumber =
         client
             .withTransaction { connection ->
                 val params = prepareQueryParams(appendCondition, events)
                 executeQuery(connection, params)
-            }.onSuccess { rowSet -> processRowSet(rowSet, promise) }
-            .onFailure { throwable -> promise.fail(throwable) }
-
-        return promise.future().coAwait()
-    }
+            }.compose { rowSet -> processRowSet(rowSet) }
+            .coAwait()
 
     private fun prepareQueryParams(
         appendCondition: AppendCondition,
@@ -59,16 +53,12 @@ class CrabletEventsAppender(
             .preparedQuery("SELECT append_events($1, $2, $3, $4) AS $LAST_SEQUENCE_ID")
             .execute(params)
 
-    private fun processRowSet(
-        rowSet: RowSet<Row>,
-        promise: Promise<SequenceNumber>,
-    ) {
+    private fun processRowSet(rowSet: RowSet<Row>): Future<SequenceNumber>? {
         val firstRowSequenceId = rowSet.first()?.getLong(LAST_SEQUENCE_ID)
-
-        if (firstRowSequenceId != null && rowSet.rowCount() == 1) {
-            promise.complete(SequenceNumber(firstRowSequenceId))
+        return if (firstRowSequenceId != null && rowSet.rowCount() == 1) {
+            Future.succeededFuture(SequenceNumber(firstRowSequenceId))
         } else {
-            promise.fail("No last_sequence_id returned from append_events function")
+            Future.failedFuture("No last_sequence_id returned from append_events function")
         }
     }
 
