@@ -196,7 +196,9 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
             class AccountsViewProjector : EventViewProjector {
                 override fun project(sqlConnection: SqlConnection, eventAsJson: JsonObject): Future<Void> {
                     val eventPayload = eventAsJson.getJsonObject("event_payload")
+
                     return when (eventPayload.getString("type")) {
+
                         "AccountOpened", "AmountDeposited" -> {
                             val id = eventPayload.getInteger("id")
                             val balance = eventPayload.getInteger("balance", 0)
@@ -220,12 +222,11 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
                             sqlConnection.preparedQuery(upsertQuery)
                                 .executeBatch(tuples)
                                 .mapEmpty()
-
                         }
+
                         else -> Future.succeededFuture()
                     }
                 }
-
             }
 
             val subscriptionConfig = SubscriptionConfig(
