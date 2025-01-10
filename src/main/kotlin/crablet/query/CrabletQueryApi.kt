@@ -1,6 +1,7 @@
 package crablet.query
 
 import crablet.EventName
+import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 
@@ -12,7 +13,7 @@ data class SubscriptionSource(
 
 class SubscriptionConfig(
     val source: SubscriptionSource,
-    val eventEffectFunction: (sqlConnection: SqlConnection, eventAsJson: JsonObject) -> JsonObject,
+    val eventViewProjector: (sqlConnection: SqlConnection, eventAsJson: JsonObject) -> Future<Void>,
 )
 
 data class IntervalConfig(

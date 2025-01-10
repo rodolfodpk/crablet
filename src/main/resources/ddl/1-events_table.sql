@@ -26,3 +26,4 @@ CREATE INDEX domain_ids_gin_index ON events USING gin (domain_ids);
 CREATE INDEX event_type_index ON events (event_type);
 
 CREATE INDEX correlation_id_index ON events (correlation_id);
+

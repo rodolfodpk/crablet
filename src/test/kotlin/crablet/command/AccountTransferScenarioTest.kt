@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-open class AccountTransferCommandScenarioTest : AbstractCrabletTest() {
+open class AccountTransferScenarioTest : AbstractCrabletTest() {
     @AfterEach
     fun log() {
         dumpEvents()
@@ -38,8 +38,8 @@ open class AccountTransferCommandScenarioTest : AbstractCrabletTest() {
             val eventsToAppend =
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 1),
-                    JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 50),
-                    JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 100),
+                    JsonObject().put("type", "AmountDeposited").put("id", 1).put("amount", 50).put("balance", 50),
+                    JsonObject().put("type", "AmountDeposited").put("id", 1).put("amount", 50).put("balance", 100),
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 3L

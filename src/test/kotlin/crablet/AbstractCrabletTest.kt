@@ -27,6 +27,14 @@ abstract class AbstractCrabletTest {
                         MountableFile.forClasspathResource("ddl/2-append_events.sql"),
                         "/docker-entrypoint-initdb.d/2-append_events.sql",
                     )
+                    withCopyFileToContainer(
+                        MountableFile.forClasspathResource("ddl/3-subscriptions_table.sql"),
+                        "/docker-entrypoint-initdb.d/3-subscriptions_table.sql",
+                    )
+                    withCopyFileToContainer(
+                        MountableFile.forClasspathResource("ddl/4-accounts_view.sql"),
+                        "/docker-entrypoint-initdb.d/4-accounts_view.sql.sql",
+                    )
                     withEnv("POSTGRES_LOG_CONNECTIONS", "on")
                     withEnv("POSTGRES_LOG_DISCONNECTIONS", "on")
                     withEnv("POSTGRES_LOG_DURATION", "on")

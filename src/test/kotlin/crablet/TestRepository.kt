@@ -1,5 +1,6 @@
 package crablet
 
+import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
@@ -20,4 +21,16 @@ class TestRepository(
                     )
                 }
             }.coAwait()
+
+    suspend fun getAllAccountView(): List<JsonObject> {
+        println("----------- Accounts view")
+        return client
+            .query("select * from accounts_view")
+            .execute()
+            .map {
+                it.map { row: Row ->
+                    row.toJson()
+                }
+            }.coAwait()
+    }
 }

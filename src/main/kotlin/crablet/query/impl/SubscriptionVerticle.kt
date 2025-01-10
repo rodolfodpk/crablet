@@ -26,6 +26,7 @@ class SubscriptionVerticle(
     private var lastSequenceId = 0L
 
     override suspend fun start() {
+        logger.info("Starting subscription for {}", subscriptionConfig.source.name)
         vertx.setTimer(intervalConfig.initialInterval, handler)
         super.start()
     }

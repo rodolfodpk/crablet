@@ -25,18 +25,22 @@ class SubscriptionComponent(
                 tx
                     .preparedQuery(SQL_EVENTS_QUERY)
                     .execute(Tuple.of(subscriptionConfig.source.name))
-                    .map { rowSet -> rowSet.map { row -> row.toJson() } }
-                    .map { jsonList: List<JsonObject> ->
-                        jsonList.map { eventJson ->
-                            Pair(eventJson, subscriptionConfig.eventEffectFunction.invoke(tx, eventJson))
-                        }
-                    }.compose { pairList: List<Pair<JsonObject, JsonObject>> ->
-                        if (pairList.isNotEmpty()) {
-                            pairList
+                    .map { rowSet ->
+                        println("Found ${rowSet.size()} events")
+                        rowSet.map { row -> row.toJson() }
+                    }.flatMap { jsonList: List<JsonObject> ->
+                        println("----- jsonlist " + jsonList)
+                        jsonList
+                            .fold(Future.succeededFuture<Void>()) { future, eventJson ->
+                                future.compose { subscriptionConfig.eventViewProjector.invoke(tx, eventJson) }
+                            }.map { jsonList }
+                    }.compose { jsonList: List<JsonObject> ->
+                        println("----- jsonlist " + jsonList)
+                        if (jsonList.isNotEmpty()) {
+                            jsonList
                                 .last()
-                                .first
                                 .let { updateOffset(tx, it.getLong("sequence_id")) }
-                                .map { Pair(it, pairList.size) }
+                                .map { Pair(it, jsonList.size) }
                         } else {
                             Future.succeededFuture(Pair(0L, 0))
                         }
@@ -49,6 +53,6 @@ class SubscriptionComponent(
         private const val SQL_EVENTS_QUERY = """
                                 SELECT *
                                   FROM events
-                                 WHERE sequence > (SELECT sequence_id FROM subscriptions WHERE name = $1)"""
+                                 WHERE sequence_id > (SELECT sequence_id FROM subscriptions WHERE name = $1)"""
     }
 }
