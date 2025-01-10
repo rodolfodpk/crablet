@@ -236,7 +236,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
 
             container.addSubscription(
                 subscriptionConfig = subscriptionConfig,
-                intervalConfig = IntervalConfig(initialInterval = 1000, interval = 100)
+                intervalConfig = IntervalConfig(initialInterval = 1000, interval = 50)
             )
             container.deployAll()
         }
