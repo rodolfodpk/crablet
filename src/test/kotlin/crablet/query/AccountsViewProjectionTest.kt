@@ -18,11 +18,8 @@ import io.kotest.common.runBlocking
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
-import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
-import io.vertx.sqlclient.SqlConnection
-import io.vertx.sqlclient.Tuple
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -30,6 +27,7 @@ import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
+import org.slf4j.LoggerFactory
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -160,6 +158,9 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
         }
     
     companion object {
+
+        private val logger = LoggerFactory.getLogger(AccountsViewProjectionTest::class.java)
+
         private lateinit var container: CrabletSubscriptionsContainer
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
@@ -193,10 +194,16 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
 
             val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
 
+            val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
+                logger.info("Call back called for {} with {} events", name, list.size)
+                latch.countDown()
+            }
+
             val subscriptionConfig = SubscriptionConfig(
                 source = source,
                 viewProjector = AccountsViewProjector(),
-                callback = { latch.countDown() })
+                callback = callback
+            )
 
             container.addSubscription(
                 subscriptionConfig = subscriptionConfig,

@@ -37,15 +37,15 @@ class SubscriptionComponent(
                             jsonList
                                 .last()
                                 .let { updateOffset(tx, it.getLong("sequence_id")) }
-                                .map { Pair(it, jsonList.size) }
+                                .map { Pair(it, jsonList) }
                         } else {
-                            Future.succeededFuture(Pair(0L, 0))
+                            Future.succeededFuture(Pair(0L, emptyList()))
                         }
                     }.map {
                         if (subscriptionConfig.callback != null) {
-                            subscriptionConfig.callback.invoke()
+                            subscriptionConfig.callback.invoke(subscriptionConfig.source.name, it.second)
                         }
-                        it
+                        Pair(it.first, it.second.size)
                     }
             }
     }

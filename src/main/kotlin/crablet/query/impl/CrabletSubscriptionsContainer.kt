@@ -23,7 +23,7 @@ class CrabletSubscriptionsContainer(
 
     override suspend fun deployAll() {
         val subscriptionComponent = SubscriptionComponent(pool)
-        val deploymentOptions = DeploymentOptions().setInstances(1)
+        val deploymentOptions = DeploymentOptions().setInstances(1) // very important!
         subscriptions.values
             .map { (subscriptionConfig, intervalConfig) ->
                 Pair(

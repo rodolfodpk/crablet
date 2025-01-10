@@ -21,7 +21,7 @@ interface ViewProjector {
 class SubscriptionConfig(
     val source: SubscriptionSource,
     val viewProjector: ViewProjector,
-    val callback: (() -> Unit)? = null,
+    val callback: ((name: String, List<JsonObject>) -> Unit)? = null,
 )
 
 data class IntervalConfig(
