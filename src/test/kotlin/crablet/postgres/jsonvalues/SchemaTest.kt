@@ -1,13 +1,13 @@
-package crablet.lab.jsonvalues
+package crablet.postgres.jsonvalues
 
-import crablet.lab.jsonvalues.CustomerEvents.CUSTOMER_ACTIVATED
-import crablet.lab.jsonvalues.CustomerEvents.CUSTOMER_DEACTIVATED
-import crablet.lab.jsonvalues.CustomerEvents.CUSTOMER_REGISTERED
-import crablet.lab.jsonvalues.CustomerEvents.CUSTOMER_RENAMED
-import crablet.lab.jsonvalues.CustomerEventsFields.ID
-import crablet.lab.jsonvalues.CustomerEventsFields.NAME
-import crablet.lab.jsonvalues.CustomerEventsFields.REASON
-import crablet.lab.jsonvalues.CustomerEventsFields.TYPE
+import crablet.postgres.jsonvalues.CustomerEvents.CUSTOMER_ACTIVATED
+import crablet.postgres.jsonvalues.CustomerEvents.CUSTOMER_DEACTIVATED
+import crablet.postgres.jsonvalues.CustomerEvents.CUSTOMER_REGISTERED
+import crablet.postgres.jsonvalues.CustomerEvents.CUSTOMER_RENAMED
+import crablet.postgres.jsonvalues.CustomerEventsFields.ID
+import crablet.postgres.jsonvalues.CustomerEventsFields.NAME
+import crablet.postgres.jsonvalues.CustomerEventsFields.REASON
+import crablet.postgres.jsonvalues.CustomerEventsFields.TYPE
 import `fun`.gen.Gen
 import io.vertx.core.json.JsonObject
 import jsonvalues.JsObj
