@@ -144,19 +144,27 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
             state2.id shouldBe 2
             state2.balance shouldBeExactly 30
 
-            latch.await(10, TimeUnit.SECONDS)
-
-            val accountsViewList = testRepository.getAllAccountView()
-
-            accountsViewList.size shouldBeExactly 2
-            accountsViewList[0].toString() shouldBe """{"id":1,"balance":70}"""
-            accountsViewList[1].toString() shouldBe """{"id":2,"balance":30}"""
-
-            val subscriptionsList = testRepository.getAllSubscriptions()
-            subscriptionsList.size shouldBeExactly 1
-            subscriptionsList[0].toString() shouldBe """{"name":"accounts-view","sequence_id":5}"""
         }
-    
+
+    @Test
+    @Order(4)
+    fun `the view model and subscriptions are correct`() =
+    runTest {
+
+        latch.await(10, TimeUnit.SECONDS)
+
+        val accountsViewList = testRepository.getAllAccountView()
+
+        accountsViewList.size shouldBeExactly 2
+        accountsViewList[0].toString() shouldBe """{"id":1,"balance":70}"""
+        accountsViewList[1].toString() shouldBe """{"id":2,"balance":30}"""
+
+        val subscriptionsList = testRepository.getAllSubscriptions()
+        subscriptionsList.size shouldBeExactly 1
+        subscriptionsList[0].toString() shouldBe """{"name":"accounts-view","sequence_id":5}"""
+
+    }
+
     companion object {
 
         private val logger = LoggerFactory.getLogger(AccountsViewProjectionTest::class.java)
