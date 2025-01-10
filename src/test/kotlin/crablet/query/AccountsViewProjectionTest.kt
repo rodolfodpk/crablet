@@ -30,6 +30,8 @@ import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountsViewProjectionTest: AbstractCrabletTest() {
@@ -92,7 +94,10 @@ class AccountsViewProjectionTest: AbstractCrabletTest() {
             seq.value shouldBeExactly sequence.value
             state.id shouldBe 2
             state.balance shouldBeExactly 0
-            Thread.sleep(5000)
+
+            latch.await(10, TimeUnit.SECONDS)
+
+            // TODO assert view
 
         }
 
@@ -101,6 +106,7 @@ class AccountsViewProjectionTest: AbstractCrabletTest() {
         private lateinit var container: CrabletSubscriptionsContainer
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
+        private lateinit var latch: CountDownLatch
 
         private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
 
@@ -122,29 +128,36 @@ class AccountsViewProjectionTest: AbstractCrabletTest() {
             container = CrabletSubscriptionsContainer(vertx = Vertx.vertx(), client = pool)
             eventsAppender = CrabletEventsAppender(client = pool)
             stateBuilder = CrabletStateBuilder(client = pool)
+            latch = CountDownLatch(1)
             cleanDatabase()
 
             val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
-            val effectFunction: (SqlConnection, JsonObject) -> Future<Void> = {
-                    sqlConnection: SqlConnection,
-                    jsonObject: JsonObject ->
-               val eventPayload = jsonObject.getJsonObject("event_payload")
-               when(eventPayload.getString("type")) {
-                    "AccountOpened", "AmountDeposited" -> {
-                        val id = eventPayload.getInteger("id")
-                        val balance = eventPayload.getInteger("balance", 0)
-                        val upsertQuery =
-                            "INSERT INTO accounts_view(id, balance) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET balance = $2"
-                        sqlConnection.preparedQuery(upsertQuery)
-                            .execute(Tuple.of(id, balance))
-                            .mapEmpty()                    }
-                    "AmountTransferred" -> TODO()
-                   else -> Future.succeededFuture()
-               }
+
+            class AccountsProjector: EventViewProjector {
+                override fun project(sqlConnection: SqlConnection, eventAsJson: JsonObject): Future<Void> {
+                    val eventPayload = eventAsJson.getJsonObject("event_payload")
+                    println("Event type ${eventPayload.getString("type")}-----")
+                    return when(eventPayload.getString("type")) {
+                        "AccountOpened", "AmountDeposited" -> {
+                            val id = eventPayload.getInteger("id")
+                            val balance = eventPayload.getInteger("balance", 0)
+                            val upsertQuery =
+                                "INSERT INTO accounts_view(id, balance) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET balance = $2"
+                            sqlConnection.preparedQuery(upsertQuery)
+                                .execute(Tuple.of(id, balance))
+                                .mapEmpty()                    }
+                        "AmountTransferred" -> TODO()
+                        else -> Future.succeededFuture()
+                    }
+                }
+
             }
-            val subscriptionConfig = SubscriptionConfig(source = source,
-                eventViewProjector = effectFunction)
-            container.addSubscription(subscriptionConfig = subscriptionConfig, intervalConfig = IntervalConfig(initialInterval = 3000, interval = 1))
+
+            val subscriptionConfig = SubscriptionConfig(
+                source = source,
+                eventViewProjector = AccountsProjector(),
+                callback = { latch.countDown() })
+            container.addSubscription(subscriptionConfig = subscriptionConfig, intervalConfig = IntervalConfig(initialInterval = 1000, interval = 1))
             container.deployAll()
         }
     }

@@ -32,7 +32,7 @@ class SubscriptionComponent(
                         println("----- jsonlist " + jsonList)
                         jsonList
                             .fold(Future.succeededFuture<Void>()) { future, eventJson ->
-                                future.compose { subscriptionConfig.eventViewProjector.invoke(tx, eventJson) }
+                                future.compose { subscriptionConfig.eventViewProjector.project(tx, eventJson) }
                             }.map { jsonList }
                     }.compose { jsonList: List<JsonObject> ->
                         println("----- jsonlist " + jsonList)
@@ -44,6 +44,11 @@ class SubscriptionComponent(
                         } else {
                             Future.succeededFuture(Pair(0L, 0))
                         }
+                    }.map {
+                        if (subscriptionConfig.callback != null) {
+                            subscriptionConfig.callback.invoke()
+                        }
+                        it
                     }
             }
     }
