@@ -233,6 +233,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
                 source = source,
                 viewProjector = AccountsViewProjector(),
                 callback = { latch.countDown() })
+
             container.addSubscription(
                 subscriptionConfig = subscriptionConfig,
                 intervalConfig = IntervalConfig(initialInterval = 1000, interval = 100)
