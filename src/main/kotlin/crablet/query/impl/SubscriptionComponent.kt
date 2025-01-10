@@ -30,7 +30,7 @@ class SubscriptionComponent(
                     }.flatMap { jsonList: List<JsonObject> ->
                         jsonList
                             .fold(Future.succeededFuture<Void>()) { future, eventJson ->
-                                future.compose { subscriptionConfig.eventViewProjector.project(tx, eventJson) }
+                                future.compose { subscriptionConfig.viewProjector.project(tx, eventJson) }
                             }.map { jsonList }
                     }.compose { jsonList: List<JsonObject> ->
                         if (jsonList.isNotEmpty()) {

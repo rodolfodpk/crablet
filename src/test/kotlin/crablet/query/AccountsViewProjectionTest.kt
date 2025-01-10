@@ -193,7 +193,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
 
             val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
 
-            class AccountsViewProjector : EventViewProjector {
+            class AccountsViewProjector : ViewProjector {
                 override fun project(sqlConnection: SqlConnection, eventAsJson: JsonObject): Future<Void> {
                     val eventPayload = eventAsJson.getJsonObject("event_payload")
 
@@ -231,7 +231,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
 
             val subscriptionConfig = SubscriptionConfig(
                 source = source,
-                eventViewProjector = AccountsViewProjector(),
+                viewProjector = AccountsViewProjector(),
                 callback = { latch.countDown() })
             container.addSubscription(
                 subscriptionConfig = subscriptionConfig,

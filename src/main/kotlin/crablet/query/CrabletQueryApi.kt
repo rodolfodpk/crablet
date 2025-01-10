@@ -11,7 +11,7 @@ data class SubscriptionSource(
     val maxNumberOfRowsToPull: Int = 250,
 )
 
-interface EventViewProjector {
+interface ViewProjector {
     fun project(
         sqlConnection: SqlConnection,
         eventAsJson: JsonObject,
@@ -20,7 +20,7 @@ interface EventViewProjector {
 
 class SubscriptionConfig(
     val source: SubscriptionSource,
-    val eventViewProjector: EventViewProjector,
+    val viewProjector: ViewProjector,
     val callback: (() -> Unit)? = null,
 )
 
