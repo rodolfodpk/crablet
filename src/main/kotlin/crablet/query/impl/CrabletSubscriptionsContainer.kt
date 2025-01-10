@@ -5,6 +5,7 @@ import crablet.query.SubscriptionConfig
 import crablet.query.SubscriptionsContainer
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
+import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool
 
 class CrabletSubscriptionsContainer(
@@ -35,7 +36,7 @@ class CrabletSubscriptionsContainer(
                     ),
                 )
             }.map { (subscriptionName, verticle) ->
-                Pair(subscriptionName, vertx.deployVerticle(verticle, deploymentOptions).await())
+                Pair(subscriptionName, vertx.deployVerticle(verticle, deploymentOptions).coAwait())
             }.map { (subscriptionName, deployId) -> deployIds.put(subscriptionName, deployId) }
     }
 }
