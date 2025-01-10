@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class AccountTransferScenarioTest : AbstractCrabletTest() {
+open class AccountTransferCommandScenarioTest : AbstractCrabletTest() {
     @AfterEach
     fun log() {
         dumpEvents()
@@ -226,7 +226,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
 
-        private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
+        val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
 
         private val transactionContextAcct1 =
             TransactionContext(
