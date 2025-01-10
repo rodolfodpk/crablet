@@ -43,8 +43,8 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
             val eventsToAppend =
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 1),
-                    JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 50),
-                    JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 100),
+                    JsonObject().put("type", "AmountDeposited").put("id", 1).put("amount", 50).put("balance", 50),
+                    JsonObject().put("type", "AmountDeposited").put("id", 1).put("amount", 50).put("balance", 100),
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 3L
@@ -239,7 +239,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
 
-        private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
+        val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
 
         private val transactionContextAcct1 =
             TransactionContext(

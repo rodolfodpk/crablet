@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-open class AccountTransferScenarioTest : AbstractCrabletTest() {
+class AccountTransferScenarioTest : AbstractCrabletTest() {
     @AfterEach
     fun log() {
         dumpEvents()
