@@ -28,7 +28,6 @@ class SubscriptionVerticle(
     override suspend fun start() {
         logger.info("Starting subscription for {}", subscriptionConfig.source.name)
         vertx.setTimer(intervalConfig.initialInterval, handler)
-        super.start()
     }
 
     private val handler: (Long) -> Unit = { timerId ->
@@ -79,7 +78,12 @@ class SubscriptionVerticle(
         val jitter = intervalConfig.jitterFunction.invoke()
         val nextInterval = min(intervalConfig.maxInterval, intervalConfig.interval * backOff.incrementAndGet() + jitter)
         vertx.setTimer(nextInterval, handler)
-        if (logger.isTraceEnabled) logger.trace("registerNoNewEvents - Rescheduled to next {} milliseconds", nextInterval)
+        if (logger.isTraceEnabled) {
+            logger.trace(
+                "registerNoNewEvents - Rescheduled to next {} milliseconds",
+                nextInterval,
+            )
+        }
     }
 
     private fun registerSuccess(eventSequence: Long) {
@@ -94,7 +98,8 @@ class SubscriptionVerticle(
     private fun registerFailure(throwable: Throwable) {
         greedy.set(false)
         val jitter = intervalConfig.jitterFunction.invoke()
-        val nextInterval = min(intervalConfig.maxInterval, (intervalConfig.interval * failures.incrementAndGet()) + jitter)
+        val nextInterval =
+            min(intervalConfig.maxInterval, (intervalConfig.interval * failures.incrementAndGet()) + jitter)
         vertx.setTimer(nextInterval, handler)
         logger.error("registerFailure - Rescheduled to next {} milliseconds", nextInterval, throwable)
     }

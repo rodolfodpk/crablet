@@ -47,7 +47,8 @@ open class AccountTransferScenarioTest : AbstractCrabletTest() {
             val (state, seq) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct1,
                 initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction)
+                onEventFunction = evolveFunction
+            )
             seq.value shouldBeExactly 3L
             state.id shouldBe 1
             state.balance shouldBeExactly 100
@@ -72,7 +73,8 @@ open class AccountTransferScenarioTest : AbstractCrabletTest() {
             val (state, seq) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct2,
                 initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction)
+                onEventFunction = evolveFunction
+            )
             seq.value shouldBeExactly sequence.value
             state.id shouldBe 2
             state.balance shouldBeExactly 0
@@ -110,7 +112,8 @@ open class AccountTransferScenarioTest : AbstractCrabletTest() {
             val (state1, seq1) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct1,
                 initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction)
+                onEventFunction = evolveFunction
+            )
 
             seq1.value shouldBeExactly sequence.value
             state1.id shouldBe 1
@@ -119,7 +122,8 @@ open class AccountTransferScenarioTest : AbstractCrabletTest() {
             val (state2, seq2) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct2,
                 initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction)
+                onEventFunction = evolveFunction
+            )
 
             seq2.value shouldBeExactly sequence.value
             state2.id shouldBe 2
@@ -158,7 +162,8 @@ open class AccountTransferScenarioTest : AbstractCrabletTest() {
             val (state1, seq1) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct1,
                 initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction)
+                onEventFunction = evolveFunction
+            )
 
             seq1.value shouldBeExactly sequence.value
             state1.id shouldBe 1
@@ -167,7 +172,8 @@ open class AccountTransferScenarioTest : AbstractCrabletTest() {
             val (state2, seq2) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct2,
                 initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction)
+                onEventFunction = evolveFunction
+            )
 
             seq2.value shouldBeExactly sequence.value
             state2.id shouldBe 2
@@ -206,7 +212,8 @@ open class AccountTransferScenarioTest : AbstractCrabletTest() {
             val (state1, seq1) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct1,
                 initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction)
+                onEventFunction = evolveFunction
+            )
 
             seq1.value shouldBeExactly sequence.value
             state1.id shouldBe 1
@@ -215,7 +222,8 @@ open class AccountTransferScenarioTest : AbstractCrabletTest() {
             val (state2, seq2) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct2,
                 initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction)
+                onEventFunction = evolveFunction
+            )
 
             seq2.value shouldBeExactly sequence.value
             state2.id shouldBe 2

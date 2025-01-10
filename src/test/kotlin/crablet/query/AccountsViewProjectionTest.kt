@@ -34,12 +34,11 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class AccountsViewProjectionTest: AbstractCrabletTest() {
+class AccountsViewProjectionTest : AbstractCrabletTest() {
 
     @AfterEach
     fun log(): Unit = runBlocking {
         dumpEvents()
-        println(TestRepository(pool).getAllAccountView())
     }
 
     @Test
@@ -90,15 +89,23 @@ class AccountsViewProjectionTest: AbstractCrabletTest() {
             val (state, seq) = stateBuilder.buildFor(
                 transactionContext = transactionContextAcct2,
                 initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction)
+                onEventFunction = evolveFunction
+            )
             seq.value shouldBeExactly sequence.value
             state.id shouldBe 2
             state.balance shouldBeExactly 0
 
             latch.await(10, TimeUnit.SECONDS)
 
-            // TODO assert view
+            val accountsViewList = testRepository.getAllAccountView()
 
+            accountsViewList.size shouldBeExactly 2
+            accountsViewList[0].toString() shouldBe """{"id":1,"balance":100}"""
+            accountsViewList[1].toString() shouldBe """{"id":2,"balance":0}"""
+
+            val subscriptionsList = testRepository.getAllSubscriptions()
+            subscriptionsList.size shouldBeExactly 1
+            subscriptionsList[0].toString() shouldBe """{"name":"accounts-view","sequence_id":4}"""
         }
 
 
@@ -107,6 +114,7 @@ class AccountsViewProjectionTest: AbstractCrabletTest() {
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
         private lateinit var latch: CountDownLatch
+        private lateinit var testRepository: TestRepository
 
         private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
 
@@ -129,15 +137,16 @@ class AccountsViewProjectionTest: AbstractCrabletTest() {
             eventsAppender = CrabletEventsAppender(client = pool)
             stateBuilder = CrabletStateBuilder(client = pool)
             latch = CountDownLatch(1)
+            testRepository = TestRepository(client = pool)
+
             cleanDatabase()
 
             val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
 
-            class AccountsProjector: EventViewProjector {
+            class AccountsViewProjector : EventViewProjector {
                 override fun project(sqlConnection: SqlConnection, eventAsJson: JsonObject): Future<Void> {
                     val eventPayload = eventAsJson.getJsonObject("event_payload")
-                    println("Event type ${eventPayload.getString("type")}-----")
-                    return when(eventPayload.getString("type")) {
+                    return when (eventPayload.getString("type")) {
                         "AccountOpened", "AmountDeposited" -> {
                             val id = eventPayload.getInteger("id")
                             val balance = eventPayload.getInteger("balance", 0)
@@ -145,7 +154,9 @@ class AccountsViewProjectionTest: AbstractCrabletTest() {
                                 "INSERT INTO accounts_view(id, balance) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET balance = $2"
                             sqlConnection.preparedQuery(upsertQuery)
                                 .execute(Tuple.of(id, balance))
-                                .mapEmpty()                    }
+                                .mapEmpty()
+                        }
+
                         "AmountTransferred" -> TODO()
                         else -> Future.succeededFuture()
                     }
@@ -155,9 +166,12 @@ class AccountsViewProjectionTest: AbstractCrabletTest() {
 
             val subscriptionConfig = SubscriptionConfig(
                 source = source,
-                eventViewProjector = AccountsProjector(),
+                eventViewProjector = AccountsViewProjector(),
                 callback = { latch.countDown() })
-            container.addSubscription(subscriptionConfig = subscriptionConfig, intervalConfig = IntervalConfig(initialInterval = 1000, interval = 1))
+            container.addSubscription(
+                subscriptionConfig = subscriptionConfig,
+                intervalConfig = IntervalConfig(initialInterval = 100, interval = 100)
+            )
             container.deployAll()
         }
     }

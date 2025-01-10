@@ -26,16 +26,13 @@ class SubscriptionComponent(
                     .preparedQuery(SQL_EVENTS_QUERY)
                     .execute(Tuple.of(subscriptionConfig.source.name))
                     .map { rowSet ->
-                        println("Found ${rowSet.size()} events")
                         rowSet.map { row -> row.toJson() }
                     }.flatMap { jsonList: List<JsonObject> ->
-                        println("----- jsonlist " + jsonList)
                         jsonList
                             .fold(Future.succeededFuture<Void>()) { future, eventJson ->
                                 future.compose { subscriptionConfig.eventViewProjector.project(tx, eventJson) }
                             }.map { jsonList }
                     }.compose { jsonList: List<JsonObject> ->
-                        println("----- jsonlist " + jsonList)
                         if (jsonList.isNotEmpty()) {
                             jsonList
                                 .last()

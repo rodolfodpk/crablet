@@ -22,9 +22,8 @@ class TestRepository(
                 }
             }.coAwait()
 
-    suspend fun getAllAccountView(): List<JsonObject> {
-        println("----------- Accounts view")
-        return client
+    suspend fun getAllAccountView(): List<JsonObject> =
+        client
             .query("select * from accounts_view")
             .execute()
             .map {
@@ -32,5 +31,14 @@ class TestRepository(
                     row.toJson()
                 }
             }.coAwait()
-    }
+
+    suspend fun getAllSubscriptions(): List<JsonObject> =
+        client
+            .query("select * from subscriptions")
+            .execute()
+            .map {
+                it.map { row: Row ->
+                    row.toJson()
+                }
+            }.coAwait()
 }

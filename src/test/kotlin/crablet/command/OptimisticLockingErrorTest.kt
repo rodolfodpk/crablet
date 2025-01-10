@@ -103,7 +103,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
         @BeforeAll
         @JvmStatic
         fun setUp() {
-            eventsAppender = CrabletEventsAppender(pool)
+            eventsAppender = CrabletEventsAppender(client = pool)
             stateBuilder = CrabletStateBuilder(client = pool)
             cleanDatabase()
         }

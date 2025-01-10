@@ -105,8 +105,8 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
         @BeforeAll
         @JvmStatic
         fun setUp() {
-            eventsAppender = CrabletEventsAppender(pool)
-            testRepository = TestRepository(pool)
+            eventsAppender = CrabletEventsAppender(client = pool)
+            testRepository = TestRepository(client = pool)
             cleanDatabase()
         }
     }
