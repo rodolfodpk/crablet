@@ -257,7 +257,7 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
         @JvmStatic
         fun setUp() {
             eventsAppender = CrabletEventsAppender(pool)
-            stateBuilder = CrabletStateBuilder(client = pool)
+            stateBuilder = CrabletStateBuilder(pool = pool)
             cleanDatabase()
         }
     }

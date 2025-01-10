@@ -183,9 +183,9 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
         @BeforeAll
         @JvmStatic
         fun setUp() = runBlocking {
-            container = CrabletSubscriptionsContainer(vertx = Vertx.vertx(), client = pool)
-            eventsAppender = CrabletEventsAppender(client = pool)
-            stateBuilder = CrabletStateBuilder(client = pool)
+            container = CrabletSubscriptionsContainer(vertx = Vertx.vertx(), pool = pool)
+            eventsAppender = CrabletEventsAppender(pool = pool)
+            stateBuilder = CrabletStateBuilder(pool = pool)
             latch = CountDownLatch(1)
             testRepository = TestRepository(client = pool)
 

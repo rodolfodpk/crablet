@@ -8,7 +8,7 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 class SubscriptionComponent(
-    private val client: Pool,
+    private val pool: Pool,
 ) {
     fun handlePendingEvents(subscriptionConfig: SubscriptionConfig): Future<Pair<Long, Int>> {
         fun updateOffset(
@@ -20,7 +20,7 @@ class SubscriptionComponent(
                 .execute(Tuple.of(subscriptionConfig.source.name, newSequenceId))
                 .map { newSequenceId }
 
-        return client
+        return pool
             .withTransaction { tx ->
                 tx
                     .preparedQuery(SQL_EVENTS_QUERY)

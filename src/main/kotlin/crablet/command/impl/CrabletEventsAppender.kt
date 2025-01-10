@@ -15,13 +15,13 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 class CrabletEventsAppender(
-    private val client: Pool,
+    private val pool: Pool,
 ) : EventsAppender {
     override suspend fun appendIf(
         events: List<JsonObject>,
         appendCondition: AppendCondition,
     ): SequenceNumber =
-        client
+        pool
             .withTransaction { connection ->
                 val params = prepareQueryParams(appendCondition, events)
                 executeQuery(connection, params)

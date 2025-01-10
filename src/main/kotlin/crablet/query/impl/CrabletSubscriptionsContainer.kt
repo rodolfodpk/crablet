@@ -9,7 +9,7 @@ import io.vertx.sqlclient.Pool
 
 class CrabletSubscriptionsContainer(
     private val vertx: Vertx,
-    private val client: Pool,
+    private val pool: Pool,
 ) : SubscriptionsContainer {
     private val subscriptions: MutableMap<String, Pair<SubscriptionConfig, IntervalConfig>> = mutableMapOf()
     private val deployIds: MutableMap<String, String> = mutableMapOf()
@@ -22,7 +22,7 @@ class CrabletSubscriptionsContainer(
     }
 
     override suspend fun deployAll() {
-        val subscriptionComponent = SubscriptionComponent(client)
+        val subscriptionComponent = SubscriptionComponent(pool)
         val deploymentOptions = DeploymentOptions().setInstances(1)
         subscriptions.values
             .map { (subscriptionConfig, intervalConfig) ->

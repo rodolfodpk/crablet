@@ -13,7 +13,7 @@ import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
 class CrabletStateBuilder(
-    private val client: Pool,
+    private val pool: Pool,
     private val pageSize: Int = 1000,
 ) : StateBuilder {
     override suspend fun <S> buildFor(
@@ -34,7 +34,7 @@ class CrabletStateBuilder(
         var lastSequence = 0L
         var error: RuntimeException? = null
 
-        client.withConnection { connection ->
+        pool.withConnection { connection ->
             connection
                 .prepare(sql)
                 .onFailure { promise.fail(it) }
