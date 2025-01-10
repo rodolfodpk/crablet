@@ -154,7 +154,6 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
         latch.await(10, TimeUnit.SECONDS)
 
         val accountsViewList = testRepository.getAllAccountView()
-
         accountsViewList.size shouldBeExactly 2
         accountsViewList[0].toString() shouldBe """{"id":1,"balance":70}"""
         accountsViewList[1].toString() shouldBe """{"id":2,"balance":30}"""

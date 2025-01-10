@@ -27,9 +27,7 @@ class AccountsViewProjector : ViewProjector {
                 val fromAcctBalance = eventPayload.getInteger("fromAcctBalance")
                 val toAcctId = eventPayload.getInteger("toAcct")
                 val toAcctBalance = eventPayload.getInteger("toAcctBalance")
-
                 val tuples = listOf(Tuple.of(fromAcctId, fromAcctBalance), Tuple.of(toAcctId, toAcctBalance))
-
                 sqlConnection
                     .preparedQuery(updateQuery)
                     .executeBatch(tuples)
