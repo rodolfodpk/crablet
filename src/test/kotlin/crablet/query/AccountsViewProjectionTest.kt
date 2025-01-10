@@ -95,20 +95,70 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
             state.id shouldBe 2
             state.balance shouldBeExactly 0
 
+        }
+
+    @Test
+    @Order(3)
+    fun `it can transfer $30 from Account 1 to Account 2 within the same db transaction`() =
+        runTest {
+            val domainIdentifiers =
+                listOf(
+                    DomainIdentifier(name = StateName("Account"), id = StateId("1")),
+                    DomainIdentifier(name = StateName("Account"), id = StateId("2")),
+                )
+            val transactionContext =
+                TransactionContext(
+                    identifiers = domainIdentifiers,
+                    eventTypes = eventTypes,
+                )
+            val appendCondition =
+                AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(3))
+            val eventsToAppend =
+                listOf(
+                    JsonObject()
+                        .put("type", "AmountTransferred")
+                        .put("fromAcct", 1)
+                        .put("toAcct", 2)
+                        .put("amount", 30)
+                        .put("fromAcctBalance", 70)
+                        .put("toAcctBalance", 30)
+                )
+            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
+            sequence.value shouldBeExactly 5L
+
+            val (state1, seq1) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct1,
+                initialStateFunction = initialStateFunction,
+                onEventFunction = evolveFunction
+            )
+
+            seq1.value shouldBeExactly sequence.value
+            state1.id shouldBe 1
+            state1.balance shouldBeExactly 70
+
+            val (state2, seq2) = stateBuilder.buildFor(
+                transactionContext = transactionContextAcct2,
+                initialStateFunction = initialStateFunction,
+                onEventFunction = evolveFunction
+            )
+
+            seq2.value shouldBeExactly sequence.value
+            state2.id shouldBe 2
+            state2.balance shouldBeExactly 30
+
             latch.await(10, TimeUnit.SECONDS)
 
             val accountsViewList = testRepository.getAllAccountView()
 
             accountsViewList.size shouldBeExactly 2
-            accountsViewList[0].toString() shouldBe """{"id":1,"balance":100}"""
-            accountsViewList[1].toString() shouldBe """{"id":2,"balance":0}"""
+            accountsViewList[0].toString() shouldBe """{"id":1,"balance":70}"""
+            accountsViewList[1].toString() shouldBe """{"id":2,"balance":30}"""
 
             val subscriptionsList = testRepository.getAllSubscriptions()
             subscriptionsList.size shouldBeExactly 1
-            subscriptionsList[0].toString() shouldBe """{"name":"accounts-view","sequence_id":4}"""
+            subscriptionsList[0].toString() shouldBe """{"name":"accounts-view","sequence_id":5}"""
         }
-
-
+    
     companion object {
         private lateinit var container: CrabletSubscriptionsContainer
         private lateinit var eventsAppender: CrabletEventsAppender
@@ -121,7 +171,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
         private val transactionContextAcct1 =
             TransactionContext(
                 identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
-                eventTypes = crablet.command.AccountTransferScenarioTest.eventTypes,
+                eventTypes = eventTypes,
             )
 
         private val transactionContextAcct2 =
@@ -157,7 +207,21 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
                                 .mapEmpty()
                         }
 
-                        "AmountTransferred" -> TODO()
+                        "AmountTransferred" -> {
+                            val fromAcctId = eventPayload.getInteger("fromAcct")
+                            val fromAcctBalance = eventPayload.getInteger("fromAcctBalance")
+                            val toAcctId = eventPayload.getInteger("toAcct")
+                            val toAcctBalance = eventPayload.getInteger("toAcctBalance")
+
+                            val tuples = listOf(Tuple.of(fromAcctId, fromAcctBalance), Tuple.of(toAcctId, toAcctBalance))
+
+                            val upsertQuery =
+                                "UPDATE accounts_view SET balance = $2 WHERE id = $1"
+                            sqlConnection.preparedQuery(upsertQuery)
+                                .executeBatch(tuples)
+                                .mapEmpty()
+
+                        }
                         else -> Future.succeededFuture()
                     }
                 }
