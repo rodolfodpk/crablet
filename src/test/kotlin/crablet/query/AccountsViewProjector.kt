@@ -6,7 +6,7 @@ import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 class AccountsViewProjector : EventSink.PostgresEventSync {
-    override fun project(
+    override fun handle(
         sqlConnection: SqlConnection,
         eventAsJson: JsonObject,
     ): Future<Void> {

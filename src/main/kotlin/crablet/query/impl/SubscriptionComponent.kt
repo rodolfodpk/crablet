@@ -33,9 +33,8 @@ class SubscriptionComponent(
                             .fold(Future.succeededFuture<Void>()) { future, eventJson ->
                                 future.compose {
                                     when (val eventSync = subscriptionConfig.eventSink) {
-                                        is EventSink.PostgresEventSync -> eventSync.project(tx, eventJson)
-                                        is EventSink.DefaultEventSink -> eventSync.project(eventJson)
-                                        else -> Future.succeededFuture()
+                                        is EventSink.PostgresEventSync -> eventSync.handle(tx, eventJson)
+                                        is EventSink.DefaultEventSink -> eventSync.handle(eventJson)
                                     }
                                 }
                             }.map { jsonList }
