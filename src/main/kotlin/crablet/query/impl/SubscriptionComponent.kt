@@ -32,7 +32,7 @@ class SubscriptionComponent(
                         when (val eventSync = subscriptionConfig.eventSink) {
                             is EventSink.PostgresSingleEventSync -> {
                                 jsonList
-                                    .fold(Future.succeededFuture<Void>()) { future, eventJson ->
+                                    .fold(successFuture) { future, eventJson ->
                                         future.compose {
                                             eventSync.handle(tx, eventJson)
                                         }
@@ -40,7 +40,7 @@ class SubscriptionComponent(
                             }
                             is EventSink.SingleEventSink -> {
                                 jsonList
-                                    .fold(Future.succeededFuture<Void>()) { future, eventJson ->
+                                    .fold(successFuture) { future, eventJson ->
                                         future.compose {
                                             eventSync.handle(eventJson)
                                         }
@@ -67,6 +67,7 @@ class SubscriptionComponent(
     }
 
     companion object {
+        private val successFuture = Future.succeededFuture<Void>()
         private const val SQL_UPDATE_OFFSET = "UPDATE subscriptions SET sequence_id = $2 where name = $1"
         private const val SQL_EVENTS_QUERY = """
                                 SELECT *
