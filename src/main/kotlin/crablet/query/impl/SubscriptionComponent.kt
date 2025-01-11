@@ -8,7 +8,7 @@ import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
-class SubscriptionComponent(
+internal class SubscriptionComponent(
     private val pool: Pool,
 ) {
     fun handlePendingEvents(subscriptionConfig: SubscriptionConfig): Future<Pair<Long, Int>> {

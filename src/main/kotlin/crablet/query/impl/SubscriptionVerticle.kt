@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-class SubscriptionVerticle(
+internal class SubscriptionVerticle(
     private val subscriptionConfig: SubscriptionConfig,
     private val subscriptionComponent: SubscriptionComponent,
     private val intervalConfig: IntervalConfig,
