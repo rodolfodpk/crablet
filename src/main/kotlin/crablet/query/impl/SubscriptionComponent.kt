@@ -30,7 +30,7 @@ class SubscriptionComponent(
                         rowSet.map { row -> row.toJson() }
                     }.flatMap { jsonList: List<JsonObject> ->
                         when (val eventSync = subscriptionConfig.eventSink) {
-                            is EventSink.PostgresSingleEventSync -> {
+                            is EventSink.PostgresSingleEventSink -> {
                                 jsonList
                                     .fold(successFuture) { future, eventJson ->
                                         future.compose {

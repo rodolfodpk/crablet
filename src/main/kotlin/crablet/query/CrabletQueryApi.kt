@@ -21,7 +21,7 @@ sealed interface EventSink {
         fun handle(eventAsJsonList: List<JsonObject>): Future<Void>
     }
 
-    interface PostgresSingleEventSync : EventSink {
+    interface PostgresSingleEventSink : EventSink {
         fun handle(
             sqlConnection: SqlConnection,
             eventAsJson: JsonObject,

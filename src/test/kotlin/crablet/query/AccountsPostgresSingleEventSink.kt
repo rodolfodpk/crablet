@@ -5,7 +5,7 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
-class AccountsPostgresSingleEventSync : EventSink.PostgresSingleEventSync {
+class AccountsPostgresSingleEventSink : EventSink.PostgresSingleEventSink {
     override fun handle(
         sqlConnection: SqlConnection,
         eventAsJson: JsonObject,
