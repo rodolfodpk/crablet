@@ -208,7 +208,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
 
             val subscriptionConfig = SubscriptionConfig(
                 source = source,
-                eventSink = AccountsPostgresEventProcessor(),
+                eventSink = AccountsPostgresSingleEventProcessor(),
                 callback = callback
             )
 
