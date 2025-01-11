@@ -11,16 +11,22 @@ data class SubscriptionSource(
     val maxNumberOfRowsToPull: Int = 250,
 )
 
-interface ViewProjector {
-    fun project(
-        sqlConnection: SqlConnection,
-        eventAsJson: JsonObject,
-    ): Future<Void>
+sealed interface EventSink {
+    interface DefaultEventSink : EventSink {
+        fun project(eventAsJson: JsonObject): Future<Void>
+    }
+
+    interface PostgresEventSync : EventSink {
+        fun project(
+            sqlConnection: SqlConnection,
+            eventAsJson: JsonObject,
+        ): Future<Void>
+    }
 }
 
 class SubscriptionConfig(
     val source: SubscriptionSource,
-    val viewProjector: ViewProjector,
+    val eventSink: EventSink,
     val callback: ((name: String, List<JsonObject>) -> Unit)? = null,
 )
 

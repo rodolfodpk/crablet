@@ -1,5 +1,6 @@
 package crablet.query.impl
 
+import crablet.query.EventSink
 import crablet.query.SubscriptionConfig
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
@@ -30,7 +31,13 @@ class SubscriptionComponent(
                     }.flatMap { jsonList: List<JsonObject> ->
                         jsonList
                             .fold(Future.succeededFuture<Void>()) { future, eventJson ->
-                                future.compose { subscriptionConfig.viewProjector.project(tx, eventJson) }
+                                future.compose {
+                                    when (val eventSync = subscriptionConfig.eventSink) {
+                                        is EventSink.PostgresEventSync -> eventSync.project(tx, eventJson)
+                                        is EventSink.DefaultEventSink -> eventSync.project(eventJson)
+                                        else -> Future.succeededFuture()
+                                    }
+                                }
                             }.map { jsonList }
                     }.compose { jsonList: List<JsonObject> ->
                         if (jsonList.isNotEmpty()) {

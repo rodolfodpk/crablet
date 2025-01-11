@@ -208,7 +208,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
 
             val subscriptionConfig = SubscriptionConfig(
                 source = source,
-                viewProjector = AccountsViewProjector(),
+                eventSink = AccountsViewProjector(),
                 callback = callback
             )
 
