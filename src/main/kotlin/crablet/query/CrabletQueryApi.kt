@@ -50,7 +50,7 @@ data class IntervalConfig(
 }
 
 interface SubscriptionsContainer {
-    suspend fun addSubscription(
+    fun addSubscription(
         subscriptionConfig: SubscriptionConfig,
         intervalConfig: IntervalConfig = IntervalConfig(),
     )

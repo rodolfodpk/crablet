@@ -15,7 +15,7 @@ class CrabletSubscriptionsContainer(
     private val subscriptions: MutableMap<String, Pair<SubscriptionConfig, IntervalConfig>> = mutableMapOf()
     private val deployIds: MutableMap<String, String> = mutableMapOf()
 
-    override suspend fun addSubscription(
+    override fun addSubscription(
         subscriptionConfig: SubscriptionConfig,
         intervalConfig: IntervalConfig,
     ) {
