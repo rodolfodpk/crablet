@@ -22,7 +22,7 @@ class SubscriptionComponent(
                 .map { newSequenceId }
 
         return pool
-            .withTransaction { tx ->
+            .withTransaction { tx: SqlConnection ->
                 tx
                     .preparedQuery(SQL_EVENTS_QUERY)
                     .execute(Tuple.of(subscriptionConfig.source.name))
@@ -36,7 +36,7 @@ class SubscriptionComponent(
                                         future.compose {
                                             eventSync.handle(tx, eventJson)
                                         }
-                                    }.map { jsonList }
+                                    }
                             }
                             is EventSink.SingleEventSink -> {
                                 jsonList
@@ -44,7 +44,7 @@ class SubscriptionComponent(
                                         future.compose {
                                             eventSync.handle(eventJson)
                                         }
-                                    }.map { jsonList }
+                                    }
                             }
                             is EventSink.BatchEventSink -> eventSync.handle(jsonList)
                         }.map { jsonList }
