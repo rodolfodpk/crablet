@@ -29,15 +29,17 @@ class SubscriptionComponent(
                     .map { rowSet ->
                         rowSet.map { row -> row.toJson() }
                     }.flatMap { jsonList: List<JsonObject> ->
-                        jsonList
-                            .fold(Future.succeededFuture<Void>()) { future, eventJson ->
-                                future.compose {
-                                    when (val eventSync = subscriptionConfig.eventSink) {
-                                        is EventSink.PostgresEventSync -> eventSync.handle(tx, eventJson)
-                                        is EventSink.DefaultEventSink -> eventSync.handle(eventJson)
-                                    }
-                                }
-                            }.map { jsonList }
+                        when (val eventSync = subscriptionConfig.eventSink) {
+                            is EventSink.PostgresEventSync -> {
+                                jsonList
+                                    .fold(Future.succeededFuture<Void>()) { future, eventJson ->
+                                        future.compose {
+                                            eventSync.handle(tx, eventJson)
+                                        }
+                                    }.map { jsonList }
+                            }
+                            is EventSink.DefaultEventSink -> eventSync.handle(jsonList)
+                        }.map { jsonList }
                     }.compose { jsonList: List<JsonObject> ->
                         if (jsonList.isNotEmpty()) {
                             jsonList

@@ -13,7 +13,7 @@ data class SubscriptionSource(
 
 sealed interface EventSink {
     interface DefaultEventSink : EventSink {
-        fun handle(eventAsJson: JsonObject): Future<Void>
+        fun handle(eventAsJson: List<JsonObject>): Future<Void>
     }
 
     interface PostgresEventSync : EventSink {
