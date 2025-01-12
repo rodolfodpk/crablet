@@ -12,10 +12,7 @@ import org.slf4j.LoggerFactory
 class SubscriptionComponent(
     private val pool: Pool,
 ) {
-    fun handlePendingEvents(
-        subscriptionConfig: SubscriptionConfig
-     ): Future<Pair<Long, Int>> {
-
+    fun handlePendingEvents(subscriptionConfig: SubscriptionConfig): Future<Pair<Long, Int>> {
         fun updateOffset(
             sqlConnection: SqlConnection,
             newSequenceId: Long,

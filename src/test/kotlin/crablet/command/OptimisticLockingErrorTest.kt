@@ -14,7 +14,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.vertx.core.json.JsonObject
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -23,11 +22,6 @@ import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class OptimisticLockingErrorTest : AbstractCrabletTest() {
-    @AfterEach
-    fun log() {
-        dumpEvents()
-    }
-
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`() =

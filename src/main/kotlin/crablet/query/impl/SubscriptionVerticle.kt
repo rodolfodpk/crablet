@@ -40,12 +40,10 @@ class SubscriptionVerticle(
             logger.info("Endpoint {} received command {}", endpointAddress, command)
             try {
                 commandHandler(command)
-            } finally {
                 val currentStatus = currentStatus()
                 message.reply(currentStatus)
-                logger.info("Endpoint {} received command {} and returned {}", endpointAddress, command, currentStatus)
-                // The consumer will get a failure
-                // message.fail(0, "it failed!!!")
+            } catch (e: Exception) {
+                message.fail(0, "Error on command ${command.name}")
             }
         }
     }
