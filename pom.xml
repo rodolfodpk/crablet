@@ -97,8 +97,8 @@
         </dependency>
         <dependency>
             <groupId>io.mockk</groupId>
-            <artifactId>mockk</artifactId>
-            <version>1.12.1</version>
+            <artifactId>mockk-jvm</artifactId>
+            <version>1.13.16</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
