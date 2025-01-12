@@ -50,22 +50,10 @@ internal class SubscriptionVerticle(
 
     private fun commandHandler(command: SubscriptionCommand) {
         when (command) {
-            TRY_PERFORM_NOW -> {
-                logger.info("Will try to perform")
-                handler.invoke(0)
-            }
-
-            PAUSE -> {
-                TODO()
-            }
-
-            RESUME -> {
-                TODO()
-            }
-
-            SHOW_STATUS -> {
-                // just return status
-            }
+            TRY_PERFORM_NOW -> handler.invoke(0)
+            PAUSE -> TODO()
+            RESUME -> TODO()
+            SHOW_STATUS -> { /* just return status */ }
         }
         logger.info("Performed?")
     }
@@ -130,7 +118,7 @@ internal class SubscriptionVerticle(
         lastSequenceId = eventSequence
         failures.set(0)
         backOff.set(0)
-        val nextInterval = if (greedy.get()) GREED_INTERVAL else intervalConfig.interval
+        val nextInterval = if (greedy.get()) greedInterval().invoke() else intervalConfig.interval
         vertx.setTimer(nextInterval, handler)
         if (logger.isTraceEnabled) logger.trace("registerSuccess - Rescheduled to next {} milliseconds", nextInterval)
     }
@@ -157,6 +145,6 @@ internal class SubscriptionVerticle(
     companion object {
         private val jmxBeanName: String = ManagementFactory.getRuntimeMXBean().name
         private val logger = LoggerFactory.getLogger(SubscriptionVerticle::class.java)
-        private const val GREED_INTERVAL = 100L
+        private fun greedInterval(): () -> Long = { (1..7).random() * 100L }
     }
 }
