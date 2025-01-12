@@ -14,7 +14,6 @@ import crablet.command.TransactionContext
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
 import crablet.query.impl.CrabletSubscriptionsContainer
-import io.kotest.common.runBlocking
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
@@ -187,7 +186,7 @@ class AccountsBatchSinkIT : AbstractCrabletTest() {
         @BeforeAll
         @JvmStatic
         fun setUp() =
-            runBlocking {
+            runTest {
                 container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
                 eventsAppender = CrabletEventsAppender(pool = pool)
                 stateBuilder = CrabletStateBuilder(pool = pool)

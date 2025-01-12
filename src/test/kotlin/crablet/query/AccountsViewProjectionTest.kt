@@ -16,7 +16,6 @@ import crablet.command.impl.CrabletStateBuilder
 import crablet.query.impl.CrabletSubscriptionsContainer
 import crablet.query.impl.SubscriptionCommand
 import crablet.query.sinks.AccountsPostgresSingleEventSink
-import io.kotest.common.runBlocking
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
@@ -153,8 +152,6 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
     @Order(4)
     fun `the view model and subscriptions are correct`() {
         vertx.executeBlocking {
-            dumpEvents()
-
             submitSubscriptionCommand(subscriptionName = source.name, command = SubscriptionCommand.TRY_PERFORM_NOW)
 
             latch.await(10, TimeUnit.SECONDS)
@@ -197,7 +194,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
         @BeforeAll
         @JvmStatic
         fun setUp() =
-            runBlocking {
+            runTest {
                 container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
                 eventsAppender = CrabletEventsAppender(pool = pool)
                 stateBuilder = CrabletStateBuilder(pool = pool)

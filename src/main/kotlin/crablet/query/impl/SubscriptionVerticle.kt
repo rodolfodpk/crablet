@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-class SubscriptionVerticle(
+internal class SubscriptionVerticle(
     private val subscriptionConfig: SubscriptionConfig,
     private val subscriptionComponent: SubscriptionComponent,
     private val intervalConfig: IntervalConfig,
@@ -52,11 +52,7 @@ class SubscriptionVerticle(
         when (command) {
             TRY_PERFORM_NOW -> {
                 logger.info("Will try to perform")
-                if (isBusy.get() || isPaused.get()) {
-                    justReschedule()
-                } else {
-                    proceed()
-                }
+                handler.invoke(0)
             }
 
             PAUSE -> {
@@ -68,7 +64,7 @@ class SubscriptionVerticle(
             }
 
             SHOW_STATUS -> {
-                TODO()
+                // just return status
             }
         }
         logger.info("Performed?")
