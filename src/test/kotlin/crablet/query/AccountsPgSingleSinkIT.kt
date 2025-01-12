@@ -1,10 +1,11 @@
-package crablet.postgres
+package crablet.query
 
 import crablet.AbstractCrabletTest
 import crablet.EventName
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
+import crablet.TestRepository
 import crablet.command.AppendCondition
 import crablet.command.DomainIdentifier
 import crablet.command.StateId
@@ -12,24 +13,26 @@ import crablet.command.StateName
 import crablet.command.TransactionContext
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
+import crablet.query.impl.CrabletSubscriptionsContainer
+import crablet.query.impl.SubscriptionCommand
+import crablet.query.sinks.AccountsPostgresSingleEventSink
+import io.kotest.common.runBlocking
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
 import io.vertx.core.json.JsonObject
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
+import org.slf4j.LoggerFactory
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class AccountTransferScenarioTest : AbstractCrabletTest() {
-    @AfterEach
-    fun log() {
-        dumpEvents()
-    }
+class AccountsPgSingleSinkIT : AbstractCrabletTest() {
 
     @Test
     @Order(1)
@@ -149,113 +152,36 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
 
     @Test
     @Order(4)
-    fun `it can transfer $10 from Account 2 to Account 1 within the same db transaction`() =
-        runTest {
-            val domainIdentifiers =
-                listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("1")),
-                    DomainIdentifier(name = StateName("Account"), id = StateId("2")),
-                )
-            val transactionContext =
-                TransactionContext(
-                    identifiers = domainIdentifiers,
-                    eventTypes = eventTypes,
-                )
-            val appendCondition =
-                AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(5))
-            val eventsToAppend =
-                listOf(
-                    JsonObject()
-                        .put("type", "AmountTransferred")
-                        .put("fromAcct", 2)
-                        .put("toAcct", 1)
-                        .put("amount", 10)
-                        .put("fromAcctBalance", 20)
-                        .put("toAcctBalance", 80),
-                )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 6L
+    fun `the view model and subscriptions are correct`() {
+        vertx.executeBlocking {
+            dumpEvents()
 
-            val (state1, seq1) =
-                stateBuilder.buildFor(
-                    transactionContext = transactionContextAcct1,
-                    initialStateFunction = initialStateFunction,
-                    onEventFunction = evolveFunction,
-                )
+            submitSubscriptionCommand(subscriptionName = source.name, command = SubscriptionCommand.TRY_PERFORM_NOW)
 
-            seq1.value shouldBeExactly sequence.value
-            state1.id shouldBe 1
-            state1.balance shouldBeExactly 80
+            latch.await(10, TimeUnit.SECONDS)
 
-            val (state2, seq2) =
-                stateBuilder.buildFor(
-                    transactionContext = transactionContextAcct2,
-                    initialStateFunction = initialStateFunction,
-                    onEventFunction = evolveFunction,
-                )
+            val accountsViewList = testRepository.getAllAccountView()
+            accountsViewList.size shouldBeExactly 2
+            accountsViewList[0].toString() shouldBe """{"id":1,"balance":70}"""
+            accountsViewList[1].toString() shouldBe """{"id":2,"balance":30}"""
 
-            seq2.value shouldBeExactly sequence.value
-            state2.id shouldBe 2
-            state2.balance shouldBeExactly 20
+            val subscriptionsList = testRepository.getAllSubscriptions()
+            subscriptionsList.size shouldBeExactly 1
+            subscriptionsList[0].toString() shouldBe """{"name":"accounts-view","sequence_id":5}"""
         }
-
-    @Test
-    @Order(5)
-    fun `it can transfer $1 from Account 2 to Account 1 within the same db transaction`() =
-        runTest {
-            val domainIdentifiers =
-                listOf(
-                    DomainIdentifier(name = StateName("Account"), id = StateId("1")),
-                    DomainIdentifier(name = StateName("Account"), id = StateId("2")),
-                )
-            val transactionContext =
-                TransactionContext(
-                    identifiers = domainIdentifiers,
-                    eventTypes = eventTypes,
-                )
-            val appendCondition =
-                AppendCondition(transactionContext = transactionContext, expectedCurrentSequence = SequenceNumber(6))
-            val eventsToAppend =
-                listOf(
-                    JsonObject()
-                        .put("type", "AmountTransferred")
-                        .put("fromAcct", 2)
-                        .put("toAcct", 1)
-                        .put("amount", 1)
-                        .put("fromAcctBalance", 19)
-                        .put("toAcctBalance", 81),
-                )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 7L
-
-            val (state1, seq1) =
-                stateBuilder.buildFor(
-                    transactionContext = transactionContextAcct1,
-                    initialStateFunction = initialStateFunction,
-                    onEventFunction = evolveFunction,
-                )
-
-            seq1.value shouldBeExactly sequence.value
-            state1.id shouldBe 1
-            state1.balance shouldBeExactly 81
-
-            val (state2, seq2) =
-                stateBuilder.buildFor(
-                    transactionContext = transactionContextAcct2,
-                    initialStateFunction = initialStateFunction,
-                    onEventFunction = evolveFunction,
-                )
-
-            seq2.value shouldBeExactly sequence.value
-            state2.id shouldBe 2
-            state2.balance shouldBeExactly 19
-        }
+    }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(AccountsPgSingleSinkIT::class.java)
+
+        private lateinit var container: CrabletSubscriptionsContainer
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
+        private lateinit var latch: CountDownLatch
+        private lateinit var testRepository: TestRepository
 
-        val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
+        private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
+        private val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
 
         private val transactionContextAcct1 =
             TransactionContext(
@@ -271,10 +197,35 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
 
         @BeforeAll
         @JvmStatic
-        fun setUp() {
-            eventsAppender = CrabletEventsAppender(pool)
-            stateBuilder = CrabletStateBuilder(pool = pool)
-            cleanDatabase()
-        }
+        fun setUp() =
+            runBlocking {
+                container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
+                eventsAppender = CrabletEventsAppender(pool = pool)
+                stateBuilder = CrabletStateBuilder(pool = pool)
+                latch = CountDownLatch(1)
+                testRepository = TestRepository(client = pool)
+
+                cleanDatabase()
+
+                val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
+                    logger.info("Call back called for {} with {} events", name, list.size)
+                    if (list.isNotEmpty()) {
+                        latch.countDown()
+                    }
+                }
+
+                val subscriptionConfig =
+                    SubscriptionConfig(
+                        source = source,
+                        eventSink = AccountsPostgresSingleEventSink(),
+                        callback = callback,
+                    )
+
+                container.addSubscription(
+                    subscriptionConfig = subscriptionConfig,
+                    intervalConfig = IntervalConfig(initialInterval = 1000 * 5, interval = 50),
+                )
+                container.deployAll()
+            }
     }
 }

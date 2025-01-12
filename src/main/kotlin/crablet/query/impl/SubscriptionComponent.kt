@@ -7,11 +7,15 @@ import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
+import org.slf4j.LoggerFactory
 
-internal class SubscriptionComponent(
+class SubscriptionComponent(
     private val pool: Pool,
 ) {
-    fun handlePendingEvents(subscriptionConfig: SubscriptionConfig): Future<Pair<Long, Int>> {
+    fun handlePendingEvents(
+        subscriptionConfig: SubscriptionConfig
+     ): Future<Pair<Long, Int>> {
+
         fun updateOffset(
             sqlConnection: SqlConnection,
             newSequenceId: Long,
@@ -30,14 +34,6 @@ internal class SubscriptionComponent(
                         rowSet.map { row -> row.toJson() }
                     }.flatMap { jsonList: List<JsonObject> ->
                         when (val eventSync = subscriptionConfig.eventSink) {
-                            is EventSink.PostgresSingleEventSink -> {
-                                jsonList
-                                    .fold(successFuture) { future, eventJson ->
-                                        future.compose {
-                                            eventSync.handle(tx, eventJson)
-                                        }
-                                    }
-                            }
                             is EventSink.SingleEventSink -> {
                                 jsonList
                                     .fold(successFuture) { future, eventJson ->
@@ -46,7 +42,31 @@ internal class SubscriptionComponent(
                                         }
                                     }
                             }
+
                             is EventSink.BatchEventSink -> eventSync.handle(jsonList)
+                            is EventSink.PostgresSingleEventSink -> {
+                                jsonList
+                                    .fold(successFuture) { future, eventJson ->
+                                        future.compose {
+                                            eventSync.handle(tx, eventJson)
+                                        }
+                                    }.onSuccess {
+                                        logger.info(
+                                            "View {} projected {} events.",
+                                            subscriptionConfig.source.name,
+                                            jsonList.size,
+                                        )
+                                    }
+                            }
+
+                            is EventSink.PostgresBatchEventSink ->
+                                eventSync.handle(tx, jsonList).onSuccess {
+                                    logger.info(
+                                        "View {} projected {} events in batch.",
+                                        subscriptionConfig.source.name,
+                                        jsonList.size,
+                                    )
+                                }
                         }.map { jsonList }
                     }.compose { jsonList: List<JsonObject> ->
                         if (jsonList.isNotEmpty()) {
@@ -54,7 +74,16 @@ internal class SubscriptionComponent(
                                 .last()
                                 .let { updateOffset(tx, it.getLong("sequence_id")) }
                                 .map { Pair(it, jsonList) }
+                                .onSuccess {
+                                    logger.info(
+                                        "View {} found {} events. Offset is now {}",
+                                        subscriptionConfig.source.name,
+                                        jsonList.size,
+                                        it.first,
+                                    )
+                                }
                         } else {
+                            logger.info("View {} found zero events", subscriptionConfig.source.name)
                             Future.succeededFuture(Pair(0L, emptyList()))
                         }
                     }.map {
@@ -67,6 +96,7 @@ internal class SubscriptionComponent(
     }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(SubscriptionComponent::class.java)
         private val successFuture = Future.succeededFuture<Void>()
         private const val SQL_UPDATE_OFFSET = "UPDATE subscriptions SET sequence_id = $2 where name = $1"
         private const val SQL_EVENTS_QUERY = """

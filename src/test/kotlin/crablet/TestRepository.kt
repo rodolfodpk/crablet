@@ -1,14 +1,13 @@
 package crablet
 
 import io.vertx.core.json.JsonObject
-import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 
 class TestRepository(
     private val client: Pool,
 ) {
-    suspend fun getSequences(): List<Triple<Long, Long, Long>>? =
+    fun getSequences(): List<Triple<Long, Long, Long>>? =
         client
             .query("select sequence_id, causation_id, correlation_id from events")
             .execute()
@@ -20,9 +19,9 @@ class TestRepository(
                         row.getLong("correlation_id"),
                     )
                 }
-            }.coAwait()
+            }.await()
 
-    suspend fun getAllAccountView(): List<JsonObject> =
+    fun getAllAccountView(): List<JsonObject> =
         client
             .query("select * from accounts_view")
             .execute()
@@ -30,9 +29,9 @@ class TestRepository(
                 it.map { row: Row ->
                     row.toJson()
                 }
-            }.coAwait()
+            }.await()
 
-    suspend fun getAllSubscriptions(): List<JsonObject> =
+    fun getAllSubscriptions(): List<JsonObject> =
         client
             .query("select * from subscriptions")
             .execute()
@@ -40,5 +39,5 @@ class TestRepository(
                 it.map { row: Row ->
                     row.toJson()
                 }
-            }.coAwait()
+            }.await()
 }

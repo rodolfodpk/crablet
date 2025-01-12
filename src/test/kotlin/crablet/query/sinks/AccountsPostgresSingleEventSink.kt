@@ -1,5 +1,6 @@
-package crablet.query
+package crablet.query.sinks
 
+import crablet.query.EventSink
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection

@@ -40,7 +40,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
                     JsonObject().put("type", "AccountOpened").put("id", 1),
                     JsonObject().put("type", "AmountDeposited").put("amount", 10).put("balance", 10),
                     JsonObject().put("type", "AmountDeposited").put("amount", 20).put("balance", 30),
-                    JsonObject().put("type", "AmountDeposited").put("amount", 30).put("balance", 40)
+                    JsonObject().put("type", "AmountDeposited").put("amount", 30).put("balance", 40),
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 4L

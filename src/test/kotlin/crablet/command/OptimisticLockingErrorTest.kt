@@ -35,7 +35,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             val appendCondition =
                 AppendCondition(
                     transactionContext = transactionContextAcct1,
-                    expectedCurrentSequence = SequenceNumber(0)
+                    expectedCurrentSequence = SequenceNumber(0),
                 )
             val eventsToAppend =
                 listOf(
@@ -46,11 +46,12 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 3L
 
-            val (state, seq) = stateBuilder.buildFor(
-                transactionContext = transactionContextAcct1,
-                initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction
-            )
+            val (state, seq) =
+                stateBuilder.buildFor(
+                    transactionContext = transactionContextAcct1,
+                    initialStateFunction = initialStateFunction,
+                    onEventFunction = evolveFunction,
+                )
             seq.value shouldBeExactly 3L
             state.id shouldBe 1
             state.balance shouldBeExactly 100
@@ -63,7 +64,7 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
             val appendCondition =
                 AppendCondition(
                     transactionContext = transactionContextAcct1,
-                    expectedCurrentSequence = SequenceNumber(2)
+                    expectedCurrentSequence = SequenceNumber(2),
                 )
             val eventsToAppend =
                 listOf(
@@ -74,18 +75,19 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
                     eventsAppender.appendIf(eventsToAppend, appendCondition)
                 }
             exception.message shouldContain
-                    "Sequence mismatch: the current last sequence 3 from the database does not match the expected sequence: 2."
+                "Sequence mismatch: the current last sequence 3 from the database does not match the expected sequence: 2."
         }
 
     @Test
     @Order(3)
     fun `Account 1 state is intact`() =
         runTest {
-            val (state, sequence) = stateBuilder.buildFor(
-                transactionContext = transactionContextAcct1,
-                initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction
-            )
+            val (state, sequence) =
+                stateBuilder.buildFor(
+                    transactionContext = transactionContextAcct1,
+                    initialStateFunction = initialStateFunction,
+                    onEventFunction = evolveFunction,
+                )
             sequence.value shouldBeExactly 3L
             state.id shouldBe 1
             state.balance shouldBeExactly 100

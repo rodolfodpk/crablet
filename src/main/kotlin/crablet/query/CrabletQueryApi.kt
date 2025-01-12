@@ -12,7 +12,6 @@ data class SubscriptionSource(
 )
 
 sealed interface EventSink {
-
     interface SingleEventSink : EventSink {
         fun handle(eventAsJson: JsonObject): Future<Void>
     }
@@ -25,6 +24,13 @@ sealed interface EventSink {
         fun handle(
             sqlConnection: SqlConnection,
             eventAsJson: JsonObject,
+        ): Future<Void>
+    }
+
+    interface PostgresBatchEventSink : EventSink {
+        fun handle(
+            sqlConnection: SqlConnection,
+            eventAsJsonList: List<JsonObject>,
         ): Future<Void>
     }
 }

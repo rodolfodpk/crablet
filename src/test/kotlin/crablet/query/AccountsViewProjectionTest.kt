@@ -14,14 +14,14 @@ import crablet.command.TransactionContext
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
 import crablet.query.impl.CrabletSubscriptionsContainer
+import crablet.query.impl.SubscriptionCommand
+import crablet.query.sinks.AccountsPostgresSingleEventSink
 import io.kotest.common.runBlocking
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
-import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -34,11 +34,6 @@ import java.util.concurrent.TimeUnit
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountsViewProjectionTest : AbstractCrabletTest() {
 
-    @AfterEach
-    fun log(): Unit = runBlocking {
-        dumpEvents()
-    }
-
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`() =
@@ -46,26 +41,34 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
             val appendCondition =
                 AppendCondition(
                     transactionContext = transactionContextAcct1,
-                    expectedCurrentSequence = SequenceNumber(0)
+                    expectedCurrentSequence = SequenceNumber(0),
                 )
             val eventsToAppend =
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 1),
-                    JsonObject().put("type", "AmountDeposited").put("id", 1).put("amount", 50).put("balance", 50),
-                    JsonObject().put("type", "AmountDeposited").put("id", 1).put("amount", 50).put("balance", 100),
+                    JsonObject()
+                        .put("type", "AmountDeposited")
+                        .put("id", 1)
+                        .put("amount", 50)
+                        .put("balance", 50),
+                    JsonObject()
+                        .put("type", "AmountDeposited")
+                        .put("id", 1)
+                        .put("amount", 50)
+                        .put("balance", 100),
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 3L
 
-            val (state, seq) = stateBuilder.buildFor(
-                transactionContext = transactionContextAcct1,
-                initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction
-            )
+            val (state, seq) =
+                stateBuilder.buildFor(
+                    transactionContext = transactionContextAcct1,
+                    initialStateFunction = initialStateFunction,
+                    onEventFunction = evolveFunction,
+                )
             seq.value shouldBeExactly 3L
             state.id shouldBe 1
             state.balance shouldBeExactly 100
-
         }
 
     @Test
@@ -75,7 +78,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
             val appendCondition =
                 AppendCondition(
                     transactionContext = transactionContextAcct2,
-                    expectedCurrentSequence = SequenceNumber(0)
+                    expectedCurrentSequence = SequenceNumber(0),
                 )
             val eventsToAppend =
                 listOf(
@@ -84,15 +87,15 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 4L
 
-            val (state, seq) = stateBuilder.buildFor(
-                transactionContext = transactionContextAcct2,
-                initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction
-            )
+            val (state, seq) =
+                stateBuilder.buildFor(
+                    transactionContext = transactionContextAcct2,
+                    initialStateFunction = initialStateFunction,
+                    onEventFunction = evolveFunction,
+                )
             seq.value shouldBeExactly sequence.value
             state.id shouldBe 2
             state.balance shouldBeExactly 0
-
         }
 
     @Test
@@ -119,53 +122,56 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
                         .put("toAcct", 2)
                         .put("amount", 30)
                         .put("fromAcctBalance", 70)
-                        .put("toAcctBalance", 30)
+                        .put("toAcctBalance", 30),
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 5L
 
-            val (state1, seq1) = stateBuilder.buildFor(
-                transactionContext = transactionContextAcct1,
-                initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction
-            )
+            val (state1, seq1) =
+                stateBuilder.buildFor(
+                    transactionContext = transactionContextAcct1,
+                    initialStateFunction = initialStateFunction,
+                    onEventFunction = evolveFunction,
+                )
 
             seq1.value shouldBeExactly sequence.value
             state1.id shouldBe 1
             state1.balance shouldBeExactly 70
 
-            val (state2, seq2) = stateBuilder.buildFor(
-                transactionContext = transactionContextAcct2,
-                initialStateFunction = initialStateFunction,
-                onEventFunction = evolveFunction
-            )
+            val (state2, seq2) =
+                stateBuilder.buildFor(
+                    transactionContext = transactionContextAcct2,
+                    initialStateFunction = initialStateFunction,
+                    onEventFunction = evolveFunction,
+                )
 
             seq2.value shouldBeExactly sequence.value
             state2.id shouldBe 2
             state2.balance shouldBeExactly 30
-
         }
 
     @Test
     @Order(4)
-    fun `the view model and subscriptions are correct`() =
-    runTest {
+    fun `the view model and subscriptions are correct`() {
+        vertx.executeBlocking {
+            dumpEvents()
 
-        latch.await(10, TimeUnit.SECONDS)
+            submitSubscriptionCommand(subscriptionName = source.name, command = SubscriptionCommand.TRY_PERFORM_NOW)
 
-        val accountsViewList = testRepository.getAllAccountView()
-        accountsViewList.size shouldBeExactly 2
-        accountsViewList[0].toString() shouldBe """{"id":1,"balance":70}"""
-        accountsViewList[1].toString() shouldBe """{"id":2,"balance":30}"""
+            latch.await(10, TimeUnit.SECONDS)
 
-        val subscriptionsList = testRepository.getAllSubscriptions()
-        subscriptionsList.size shouldBeExactly 1
-        subscriptionsList[0].toString() shouldBe """{"name":"accounts-view","sequence_id":5}"""
+            val accountsViewList = testRepository.getAllAccountView()
+            accountsViewList.size shouldBeExactly 2
+            accountsViewList[0].toString() shouldBe """{"id":1,"balance":70}"""
+            accountsViewList[1].toString() shouldBe """{"id":2,"balance":30}"""
 
+            val subscriptionsList = testRepository.getAllSubscriptions()
+            subscriptionsList.size shouldBeExactly 1
+            subscriptionsList[0].toString() shouldBe """{"name":"accounts-view","sequence_id":5}"""
+        }
     }
 
     companion object {
-
         private val logger = LoggerFactory.getLogger(AccountsViewProjectionTest::class.java)
 
         private lateinit var container: CrabletSubscriptionsContainer
@@ -175,6 +181,7 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
         private lateinit var testRepository: TestRepository
 
         private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
+        private val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
 
         private val transactionContextAcct1 =
             TransactionContext(
@@ -190,34 +197,35 @@ class AccountsViewProjectionTest : AbstractCrabletTest() {
 
         @BeforeAll
         @JvmStatic
-        fun setUp() = runBlocking {
-            container = CrabletSubscriptionsContainer(vertx = Vertx.vertx(), pool = pool)
-            eventsAppender = CrabletEventsAppender(pool = pool)
-            stateBuilder = CrabletStateBuilder(pool = pool)
-            latch = CountDownLatch(1)
-            testRepository = TestRepository(client = pool)
+        fun setUp() =
+            runBlocking {
+                container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
+                eventsAppender = CrabletEventsAppender(pool = pool)
+                stateBuilder = CrabletStateBuilder(pool = pool)
+                latch = CountDownLatch(1)
+                testRepository = TestRepository(client = pool)
 
-            cleanDatabase()
+                cleanDatabase()
 
-            val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
+                val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
+                    logger.info("Call back called for {} with {} events", name, list.size)
+                    if (list.isNotEmpty()) {
+                        latch.countDown()
+                    }
+                }
 
-            val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
-                logger.info("Call back called for {} with {} events", name, list.size)
-                latch.countDown()
+                val subscriptionConfig =
+                    SubscriptionConfig(
+                        source = source,
+                        eventSink = AccountsPostgresSingleEventSink(),
+                        callback = callback,
+                    )
+
+                container.addSubscription(
+                    subscriptionConfig = subscriptionConfig,
+                    intervalConfig = IntervalConfig(initialInterval = 1000 * 5, interval = 50),
+                )
+                container.deployAll()
             }
-
-            val subscriptionConfig = SubscriptionConfig(
-                source = source,
-                eventSink = AccountsPostgresSingleEventSink(),
-                callback = callback
-            )
-
-            container.addSubscription(
-                subscriptionConfig = subscriptionConfig,
-                intervalConfig = IntervalConfig(initialInterval = 1000, interval = 50)
-            )
-            container.deployAll()
-        }
     }
 }
-

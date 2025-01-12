@@ -95,6 +95,12 @@
             <version>14.0.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.mockk</groupId>
+            <artifactId>mockk</artifactId>
+            <version>1.12.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
@@ -110,6 +116,14 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include> <!-- This line includes all Java files ending with 'IT' -->
+                    </includes>
+<!--                    <parallel>false</parallel>-->
+<!--                    <threadCount>1</threadCount>-->
+<!--                    <perCoreThreadCount>false</perCoreThreadCount>-->
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>

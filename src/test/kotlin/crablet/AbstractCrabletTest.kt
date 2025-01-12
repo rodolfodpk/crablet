@@ -1,13 +1,21 @@
 package crablet
 
+import crablet.query.impl.SubscriptionCommand
+import io.vertx.core.Vertx
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.PoolOptions
+import org.slf4j.LoggerFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
 
 abstract class AbstractCrabletTest {
     companion object {
+        private val logger = LoggerFactory.getLogger(AbstractCrabletTest::class.java)
+
+        @JvmStatic
+        protected val vertx: Vertx = Vertx.vertx()
+
         val PG_DOCKER_IMAGE = "postgres:latest"
         val DB_NAME = "postgres"
         val DB_USERNAME = "postgres"
@@ -53,7 +61,7 @@ abstract class AbstractCrabletTest {
                     .setUser(DB_USERNAME)
                     .setPassword(DB_PASSWORD)
             val poolOptions = PoolOptions().setMaxSize(5)
-            Pool.pool(connectOptions, poolOptions)
+            Pool.pool(vertx, connectOptions, poolOptions)
         }
 
         fun cleanDatabase() {
@@ -75,6 +83,21 @@ abstract class AbstractCrabletTest {
                     rs.forEach {
                         println(it.toJson())
                     }
+                }.await()
+        }
+
+        fun submitSubscriptionCommand(
+            subscriptionName: String,
+            command: SubscriptionCommand,
+        ) {
+            val eventBus = vertx.eventBus()
+
+            eventBus
+                .request<SubscriptionCommand>("$subscriptionName@subscriptions", command)
+                .onSuccess {
+                    logger.info("Command result {}", it.body())
+                }.onFailure {
+                    logger.error("Command error", it)
                 }.await()
         }
     }

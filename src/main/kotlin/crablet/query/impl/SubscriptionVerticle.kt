@@ -2,22 +2,25 @@ package crablet.query.impl
 
 import crablet.query.IntervalConfig
 import crablet.query.SubscriptionConfig
+import crablet.query.impl.SubscriptionCommand.PAUSE
+import crablet.query.impl.SubscriptionCommand.RESUME
+import crablet.query.impl.SubscriptionCommand.SHOW_STATUS
+import crablet.query.impl.SubscriptionCommand.TRY_PERFORM_NOW
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
-import io.vertx.kotlin.coroutines.CoroutineVerticle
+import io.vertx.core.eventbus.Message
+import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
-internal class SubscriptionVerticle(
+class SubscriptionVerticle(
     private val subscriptionConfig: SubscriptionConfig,
     private val subscriptionComponent: SubscriptionComponent,
     private val intervalConfig: IntervalConfig,
-) : CoroutineVerticle() {
-    private val name = "${SubscriptionVerticle::class.java.simpleName}-${subscriptionConfig.source.name}"
-    private val logger = LoggerFactory.getLogger(name)
-
+) : AbstractVerticle() {
     private val greedy = AtomicBoolean(false)
     private val failures = AtomicLong(0L)
     private val backOff = AtomicLong(0L)
@@ -25,9 +28,52 @@ internal class SubscriptionVerticle(
     private val isBusy = AtomicBoolean(false)
     private var lastSequenceId = 0L
 
-    override suspend fun start() {
+    override fun start() {
         logger.info("Starting subscription for {}", subscriptionConfig.source.name)
         vertx.setTimer(intervalConfig.initialInterval, handler)
+        val eventBus = vertx.eventBus()
+
+        val endpointAddress = "${subscriptionConfig.source.name}@subscriptions"
+        val consumer = eventBus.localConsumer<SubscriptionCommand>(endpointAddress)
+        consumer.handler { message: Message<SubscriptionCommand> ->
+            val command = message.body()
+            logger.info("Endpoint {} received command {}", endpointAddress, command)
+            try {
+                commandHandler(command)
+            } finally {
+                val currentStatus = currentStatus()
+                message.reply(currentStatus)
+                logger.info("Endpoint {} received command {} and returned {}", endpointAddress, command, currentStatus)
+                // The consumer will get a failure
+                // message.fail(0, "it failed!!!")
+            }
+        }
+    }
+
+    private fun commandHandler(command: SubscriptionCommand) {
+        when (command) {
+            TRY_PERFORM_NOW -> {
+                logger.info("Will try to perform")
+                if (isBusy.get() || isPaused.get()) {
+                    justReschedule()
+                } else {
+                    proceed()
+                }
+            }
+
+            PAUSE -> {
+                TODO()
+            }
+
+            RESUME -> {
+                TODO()
+            }
+
+            SHOW_STATUS -> {
+                TODO()
+            }
+        }
+        logger.info("Performed?")
     }
 
     private val handler: (Long) -> Unit = { timerId ->
@@ -104,8 +150,19 @@ internal class SubscriptionVerticle(
         logger.error("registerFailure - Rescheduled to next {} milliseconds", nextInterval, throwable)
     }
 
+    private fun currentStatus(): JsonObject =
+        JsonObject()
+            .put("node", jmxBeanName)
+            .put("paused", isPaused.get())
+            .put("busy", isBusy.get())
+            .put("greedy", greedy.get())
+            .put("failures", failures.get())
+            .put("backOff", backOff.get())
+            .put("currentOffset", lastSequenceId)
+
     companion object {
         private val jmxBeanName: String = ManagementFactory.getRuntimeMXBean().name
+        private val logger = LoggerFactory.getLogger(SubscriptionVerticle::class.java)
         private const val GREED_INTERVAL = 100L
     }
 }
