@@ -33,10 +33,6 @@ import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountsPgBatchSinkIT : AbstractCrabletTest() {
-    //    @AfterEach
-//    fun log(): Unit = runBlocking {
-//        dumpEvents()
-//    }
 
     @Test
     @Order(1)

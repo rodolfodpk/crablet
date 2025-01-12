@@ -35,11 +35,6 @@ import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountsSingleSinkIT : AbstractCrabletTest() {
-    //    @AfterEach
-//    fun log(): Unit = runBlocking {
-//        dumpEvents()
-//    }
-
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`() =
@@ -158,14 +153,12 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
 
     @Test
     @Order(4)
-    fun `event sink was called`() =
-        runBlocking {
-            logger.info("NOw will check view status")
-
-            latch.await(30, TimeUnit.SECONDS)
-
-            verify { mockSingleEventSink.handle(any<JsonObject>()) }
+    fun `event sink was called`() {
+        vertx.executeBlocking {
+            latch.await(10, TimeUnit.SECONDS)
+            verify(exactly = 5) { mockSingleEventSink.handle(any<JsonObject>()) }
         }
+    }
 
     companion object {
         private val logger = LoggerFactory.getLogger(AccountsSingleSinkIT::class.java)

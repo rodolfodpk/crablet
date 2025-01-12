@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountsPgSingleSinkIT : AbstractCrabletTest() {
-
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`() =
