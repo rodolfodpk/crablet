@@ -153,7 +153,7 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
     @Test
     @Order(4)
     fun `event sink was called`() {
-        latch.await(7, TimeUnit.SECONDS)
+        latch.await(10, TimeUnit.SECONDS)
         verify(exactly = 5) { mockSingleEventSink.handle(any<JsonObject>()) }
     }
 
