@@ -145,6 +145,7 @@ internal class SubscriptionVerticle(
     companion object {
         private val jmxBeanName: String = ManagementFactory.getRuntimeMXBean().name
         private val logger = LoggerFactory.getLogger(SubscriptionVerticle::class.java)
+
         private fun greedInterval(): () -> Long = { (1..7).random() * 100L }
     }
 }

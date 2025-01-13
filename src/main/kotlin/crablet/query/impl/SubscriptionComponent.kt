@@ -3,6 +3,7 @@ package crablet.query.impl
 import crablet.query.EventSink
 import crablet.query.SubscriptionConfig
 import io.vertx.core.Future
+import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.SqlConnection
@@ -10,17 +11,86 @@ import io.vertx.sqlclient.Tuple
 import org.slf4j.LoggerFactory
 
 internal class SubscriptionComponent(
+    private val vertx: Vertx,
     private val pool: Pool,
 ) {
     fun handlePendingEvents(subscriptionConfig: SubscriptionConfig): Future<Pair<Long, Int>> {
-        fun updateOffset(
-            sqlConnection: SqlConnection,
-            newSequenceId: Long,
-        ): Future<Long> =
-            sqlConnection
-                .preparedQuery(SQL_UPDATE_OFFSET)
-                .execute(Tuple.of(subscriptionConfig.source.name, newSequenceId))
-                .map { newSequenceId }
+
+        fun handleEventSink(
+            jsonList: List<JsonObject>,
+            tx: SqlConnection,
+        ): Future<List<JsonObject>> =
+            when (val eventSync = subscriptionConfig.eventSink) {
+                is EventSink.SingleEventSink -> {
+                    jsonList
+                        .fold(successFuture) { future, eventJson ->
+                            future.compose {
+                                eventSync.handle(eventJson)
+                            }
+                        }
+                }
+                is EventSink.BatchEventSink -> eventSync.handle(jsonList)
+                is EventSink.PostgresSingleEventSink -> {
+                    jsonList
+                        .fold(successFuture) { future, eventJson ->
+                            future.compose {
+                                eventSync.handle(tx, eventJson)
+                            }
+                        }.onSuccess {
+                            logger.info(
+                                "View {} projected {} events.",
+                                subscriptionConfig.source.name,
+                                jsonList.size,
+                            )
+                        }
+                }
+                is EventSink.PostgresBatchEventSink ->
+                    eventSync.handle(tx, jsonList).onSuccess {
+                        logger.info(
+                            "View {} projected {} events in batch.",
+                            subscriptionConfig.source.name,
+                            jsonList.size,
+                        )
+                    }
+            }.map { jsonList }
+
+        fun updateSequenceId(
+            jsonList: List<JsonObject>,
+            tx: SqlConnection,
+        ): Future<Long> {
+           return if (jsonList.isNotEmpty()) {
+                val last: JsonObject = jsonList.last()
+                val newSequenceId: Long = last.getLong("sequence_id")
+                tx
+                    .preparedQuery(SQL_UPDATE_OFFSET)
+                    .execute(Tuple.of(subscriptionConfig.source.name, newSequenceId))
+                    .map { newSequenceId }.mapEmpty()
+            } else {
+                logger.info("View {} found zero events", subscriptionConfig.source.name)
+                Future.succeededFuture()
+            }
+        }
+
+        fun handleCallback(
+            sequenceId: Long,
+            jsonList: List<JsonObject>,
+        ): Pair<Long, Int> =
+            if (subscriptionConfig.callback != null) {
+                vertx.executeBlocking {
+                    try {
+                        subscriptionConfig.callback.invoke(subscriptionConfig.source.name, jsonList)
+                    } catch (exception: RuntimeException) {
+                        logger.info(
+                            "Error on callback for {} with {} events",
+                            subscriptionConfig.source.name,
+                            jsonList.size,
+                        )
+                    }
+                }
+                Pair(sequenceId, jsonList.size)
+            } else {
+                Pair(sequenceId, jsonList.size)
+            }
 
         return pool
             .withTransaction { tx: SqlConnection ->
@@ -30,65 +100,13 @@ internal class SubscriptionComponent(
                     .map { rowSet ->
                         rowSet.map { row -> row.toJson() }
                     }.flatMap { jsonList: List<JsonObject> ->
-                        when (val eventSync = subscriptionConfig.eventSink) {
-                            is EventSink.SingleEventSink -> {
-                                jsonList
-                                    .fold(successFuture) { future, eventJson ->
-                                        future.compose {
-                                            eventSync.handle(eventJson)
-                                        }
-                                    }
-                            }
-
-                            is EventSink.BatchEventSink -> eventSync.handle(jsonList)
-                            is EventSink.PostgresSingleEventSink -> {
-                                jsonList
-                                    .fold(successFuture) { future, eventJson ->
-                                        future.compose {
-                                            eventSync.handle(tx, eventJson)
-                                        }
-                                    }.onSuccess {
-                                        logger.info(
-                                            "View {} projected {} events.",
-                                            subscriptionConfig.source.name,
-                                            jsonList.size,
-                                        )
-                                    }
-                            }
-
-                            is EventSink.PostgresBatchEventSink ->
-                                eventSync.handle(tx, jsonList).onSuccess {
-                                    logger.info(
-                                        "View {} projected {} events in batch.",
-                                        subscriptionConfig.source.name,
-                                        jsonList.size,
-                                    )
-                                }
-                        }.map { jsonList }
-                    }.compose { jsonList: List<JsonObject> ->
-                        if (jsonList.isNotEmpty()) {
-                            jsonList
-                                .last()
-                                .let { updateOffset(tx, it.getLong("sequence_id")) }
-                                .map { Pair(it, jsonList) }
-                                .onSuccess {
-                                    logger.info(
-                                        "View {} found {} events. Offset is now {}",
-                                        subscriptionConfig.source.name,
-                                        jsonList.size,
-                                        it.first,
-                                    )
-                                }
-                        } else {
-                            logger.info("View {} found zero events", subscriptionConfig.source.name)
-                            Future.succeededFuture(Pair(0L, emptyList()))
-                        }
-                    }.map {
-                        if (subscriptionConfig.callback != null) {
-                            subscriptionConfig.callback.invoke(subscriptionConfig.source.name, it.second)
-                        }
-                        Pair(it.first, it.second.size)
+                        handleEventSink(jsonList, tx)
+                    }.flatMap { jsonList: List<JsonObject> ->
+                        updateSequenceId(jsonList, tx)
+                            .map { Pair(jsonList, it) }
                     }
+            }.map { (sequenceId, jsonList) ->
+                handleCallback(jsonList, sequenceId)
             }
     }
 
