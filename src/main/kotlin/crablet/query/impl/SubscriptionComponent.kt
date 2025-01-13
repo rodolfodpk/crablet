@@ -64,10 +64,10 @@ internal class SubscriptionComponent(
                 tx
                     .preparedQuery(SQL_UPDATE_OFFSET)
                     .execute(Tuple.of(subscriptionConfig.source.name, newSequenceId))
-                    .map { newSequenceId }.mapEmpty()
+                    .map { newSequenceId }
             } else {
                 logger.info("View {} found zero events", subscriptionConfig.source.name)
-                Future.succeededFuture()
+                Future.succeededFuture(0L)
             }
         }
 
