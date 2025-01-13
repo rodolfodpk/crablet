@@ -153,7 +153,7 @@ class AccountsBatchSinkIT : AbstractCrabletTest() {
     @Test
     @Order(4)
     fun `event sink was called`() {
-        latch.await(7, TimeUnit.SECONDS)
+        latch.await(2, TimeUnit.SECONDS)
         verify(exactly = 1) { mockBatchEventSink.handle(any<List<JsonObject>>()) }
     }
 
@@ -210,7 +210,7 @@ class AccountsBatchSinkIT : AbstractCrabletTest() {
 
                 container.addSubscription(
                     subscriptionConfig = subscriptionConfig,
-                    intervalConfig = IntervalConfig(initialInterval = 1000, interval = 50),
+                    intervalConfig = IntervalConfig(initialInterval = 100, interval = 500),
                 )
                 container.deployAll()
             }
