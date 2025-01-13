@@ -20,23 +20,21 @@ internal class SubscriptionComponent(
             tx: SqlConnection,
         ): Future<List<JsonObject>> =
             when (val eventSync = subscriptionConfig.eventSink) {
-                is EventSink.SingleEventSink -> {
+                is EventSink.SingleEventSink ->
                     jsonList
                         .fold(successFuture) { future, eventJson ->
                             future.compose {
                                 eventSync.handle(eventJson)
                             }
                         }
-                }
                 is EventSink.BatchEventSink -> eventSync.handle(jsonList)
-                is EventSink.PostgresSingleEventSink -> {
+                is EventSink.PostgresSingleEventSink ->
                     jsonList
                         .fold(successFuture) { future, eventJson ->
                             future.compose {
                                 eventSync.handle(tx, eventJson)
                             }
                         }
-                }
                 is EventSink.PostgresBatchEventSink ->
                     eventSync.handle(tx, jsonList)
             }.map { jsonList }

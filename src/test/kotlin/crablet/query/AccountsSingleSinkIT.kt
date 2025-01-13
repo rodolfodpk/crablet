@@ -213,7 +213,7 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
 
                 container.addSubscription(
                     subscriptionConfig = subscriptionConfig,
-                    intervalConfig = IntervalConfig(initialInterval = 3000, interval = 1),
+                    intervalConfig = IntervalConfig(initialInterval = 5000, interval = 1000),
                 )
                 container.deployAll()
             }
