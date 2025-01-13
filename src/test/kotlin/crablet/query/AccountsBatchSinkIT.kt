@@ -212,7 +212,7 @@ class AccountsBatchSinkIT : AbstractCrabletTest() {
 
                 container.addSubscription(
                     subscriptionConfig = subscriptionConfig,
-                    intervalConfig = IntervalConfig(initialInterval = 100, interval = 500),
+                    intervalConfig = IntervalConfig(initialInterval = 100, interval = 100),
                 )
                 container.deployAll()
             }
