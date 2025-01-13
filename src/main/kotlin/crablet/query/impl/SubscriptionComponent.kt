@@ -36,22 +36,10 @@ internal class SubscriptionComponent(
                             future.compose {
                                 eventSync.handle(tx, eventJson)
                             }
-                        }.onSuccess {
-                            logger.info(
-                                "View {} projected {} events.",
-                                subscriptionConfig.source.name,
-                                jsonList.size,
-                            )
                         }
                 }
                 is EventSink.PostgresBatchEventSink ->
-                    eventSync.handle(tx, jsonList).onSuccess {
-                        logger.info(
-                            "View {} projected {} events in batch.",
-                            subscriptionConfig.source.name,
-                            jsonList.size,
-                        )
-                    }
+                    eventSync.handle(tx, jsonList)
             }.map { jsonList }
 
         fun updateSequenceId(
