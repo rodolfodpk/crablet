@@ -150,18 +150,23 @@ class AccountsPgBatchSinkIT : AbstractCrabletTest() {
 
     @Test
     @Order(4)
-    fun `the view model and subscriptions are correct`() {
-        vertx.executeBlocking {
+    fun `when trying to perform`() =
+        runTest {
             submitSubscriptionCommand(subscriptionName = source.name, command = SubscriptionCommand.TRY_PERFORM_NOW)
+        }
 
-            latch.await(10, TimeUnit.SECONDS)
+    @Test
+    @Order(5)
+    fun `then the view model and subscriptions are correct`() {
+        vertx.executeBlocking {
+            latch.await(7, TimeUnit.SECONDS)
 
-            val accountsViewList = testRepository.getAllAccountView()
+            val accountsViewList = testRepository.getAllAccountView().await()
             accountsViewList.size shouldBeExactly 2
             accountsViewList[0].toString() shouldBe """{"id":1,"balance":70}"""
             accountsViewList[1].toString() shouldBe """{"id":2,"balance":30}"""
 
-            val subscriptionsList = testRepository.getAllSubscriptions()
+            val subscriptionsList = testRepository.getAllSubscriptions().await()
             subscriptionsList.size shouldBeExactly 1
             subscriptionsList[0].toString() shouldBe """{"name":"accounts-view","sequence_id":5}"""
         }
@@ -217,7 +222,7 @@ class AccountsPgBatchSinkIT : AbstractCrabletTest() {
 
                 container.addSubscription(
                     subscriptionConfig = subscriptionConfig,
-                    intervalConfig = IntervalConfig(initialInterval = 2000, interval = 50000),
+                    intervalConfig = IntervalConfig(initialInterval = 10000, interval = 50000),
                 )
                 container.deployAll()
             }

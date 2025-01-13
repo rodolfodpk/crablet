@@ -1,5 +1,6 @@
 package crablet
 
+import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
@@ -7,7 +8,7 @@ import io.vertx.sqlclient.Row
 class TestRepository(
     private val client: Pool,
 ) {
-    fun getSequences(): List<Triple<Long, Long, Long>>? =
+    fun getSequences(): Future<List<Triple<Long, Long, Long>>> =
         client
             .query("select sequence_id, causation_id, correlation_id from events")
             .execute()
@@ -19,9 +20,9 @@ class TestRepository(
                         row.getLong("correlation_id"),
                     )
                 }
-            }.await()
+            }
 
-    fun getAllAccountView(): List<JsonObject> =
+    fun getAllAccountView(): Future<List<JsonObject>> =
         client
             .query("select * from accounts_view")
             .execute()
@@ -29,9 +30,9 @@ class TestRepository(
                 it.map { row: Row ->
                     row.toJson()
                 }
-            }.await()
+            }
 
-    fun getAllSubscriptions(): List<JsonObject> =
+    fun getAllSubscriptions(): Future<List<JsonObject>> =
         client
             .query("select * from subscriptions")
             .execute()
@@ -39,5 +40,5 @@ class TestRepository(
                 it.map { row: Row ->
                     row.toJson()
                 }
-            }.await()
+            }
 }

@@ -2,6 +2,7 @@ package crablet
 
 import crablet.query.impl.SubscriptionCommand
 import io.vertx.core.Vertx
+import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.PoolOptions
@@ -64,14 +65,14 @@ abstract class AbstractCrabletTest {
             Pool.pool(vertx, connectOptions, poolOptions)
         }
 
-        fun cleanDatabase() {
-            println("Cleaning database -------------")
+        suspend fun cleanDatabase() {
+            logger.info("Cleaning database -------------")
             pool
                 .query("TRUNCATE TABLE events")
                 .execute()
                 .compose {
                     pool.query("ALTER SEQUENCE events_sequence_id_seq RESTART WITH 1").execute()
-                }.await()
+                }.coAwait()
         }
 
         fun dumpEvents() {
@@ -79,26 +80,25 @@ abstract class AbstractCrabletTest {
                 .query("select * from events order by sequence_id")
                 .execute()
                 .onSuccess { rs ->
-                    println("Events -------------")
+                    logger.info("Events -------------")
                     rs.forEach {
                         println(it.toJson())
                     }
                 }.await()
         }
 
-        fun submitSubscriptionCommand(
+        suspend fun submitSubscriptionCommand(
             subscriptionName: String,
             command: SubscriptionCommand,
         ) {
             val eventBus = vertx.eventBus()
-
             eventBus
                 .request<SubscriptionCommand>("$subscriptionName@subscriptions", command)
                 .onSuccess {
                     logger.info("Command result {}", it.body())
                 }.onFailure {
                     logger.error("Command error", it)
-                }.await()
+                }.coAwait()
         }
     }
 }

@@ -15,7 +15,6 @@ internal class SubscriptionComponent(
     private val pool: Pool,
 ) {
     fun handlePendingEvents(subscriptionConfig: SubscriptionConfig): Future<Pair<Long, Int>> {
-
         fun handleEventSink(
             jsonList: List<JsonObject>,
             tx: SqlConnection,
@@ -45,19 +44,24 @@ internal class SubscriptionComponent(
         fun updateSequenceId(
             jsonList: List<JsonObject>,
             tx: SqlConnection,
-        ): Future<Long> {
-           return if (jsonList.isNotEmpty()) {
+        ): Future<Long> =
+            if (jsonList.isNotEmpty()) {
                 val last: JsonObject = jsonList.last()
                 val newSequenceId: Long = last.getLong("sequence_id")
+                logger.info(
+                    "Subscription {} found {} events. Will update sequenceId to {}",
+                    subscriptionConfig.source.name,
+                    jsonList.size,
+                    newSequenceId,
+                )
                 tx
                     .preparedQuery(SQL_UPDATE_OFFSET)
                     .execute(Tuple.of(subscriptionConfig.source.name, newSequenceId))
                     .map { newSequenceId }
             } else {
-                logger.info("View {} found zero events", subscriptionConfig.source.name)
+                logger.debug("View {} found zero events", subscriptionConfig.source.name)
                 Future.succeededFuture(0L)
             }
-        }
 
         fun handleCallback(
             sequenceId: Long,
@@ -66,6 +70,11 @@ internal class SubscriptionComponent(
             if (subscriptionConfig.callback != null) {
                 vertx.executeBlocking {
                     try {
+                        logger.info(
+                            "Subscription {} found {} events. Will invoke callback function",
+                            subscriptionConfig.source.name,
+                            jsonList.size,
+                        )
                         subscriptionConfig.callback.invoke(subscriptionConfig.source.name, jsonList)
                     } catch (exception: RuntimeException) {
                         logger.info(
@@ -86,10 +95,11 @@ internal class SubscriptionComponent(
                     .preparedQuery(SQL_EVENTS_QUERY)
                     .execute(Tuple.of(subscriptionConfig.source.name))
                     .map { rowSet ->
+                        logger.info("Subscription {} found {} events", subscriptionConfig.source.name, rowSet.size())
                         rowSet.map { row -> row.toJson() }
-                    }.flatMap { jsonList: List<JsonObject> ->
+                    }.compose { jsonList: List<JsonObject> ->
                         handleEventSink(jsonList, tx)
-                    }.flatMap { jsonList: List<JsonObject> ->
+                    }.compose { jsonList: List<JsonObject> ->
                         updateSequenceId(jsonList, tx)
                             .map { Pair(jsonList, it) }
                     }

@@ -9,6 +9,7 @@ import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.vertx.core.json.JsonObject
+import io.vertx.kotlin.coroutines.coAwait
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
@@ -38,7 +39,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 4L
-            val ids = testRepository.getSequences()!!
+            val ids = testRepository.getSequences().coAwait()
             val expectedResults =
                 listOf(
                     Triple(1L, 1L, 1L),
@@ -72,7 +73,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
                 )
             val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
             sequence.value shouldBeExactly 8L
-            val ids = testRepository.getSequences()!!
+            val ids = testRepository.getSequences().coAwait()
             val expectedResults =
                 listOf(
                     Triple(1L, 1L, 1L),
@@ -98,10 +99,11 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
 
         @BeforeAll
         @JvmStatic
-        fun setUp() {
-            eventsAppender = CrabletEventsAppender(pool = pool)
-            testRepository = TestRepository(client = pool)
-            cleanDatabase()
-        }
+        fun setUp() =
+            runTest {
+                eventsAppender = CrabletEventsAppender(pool)
+                testRepository = TestRepository(pool)
+                cleanDatabase()
+            }
     }
 }

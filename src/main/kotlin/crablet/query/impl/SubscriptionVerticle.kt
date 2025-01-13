@@ -55,7 +55,6 @@ internal class SubscriptionVerticle(
             RESUME -> TODO()
             SHOW_STATUS -> { /* just return status */ }
         }
-        logger.info("Performed?")
     }
 
     private val handler: (Long) -> Unit = { timerId ->

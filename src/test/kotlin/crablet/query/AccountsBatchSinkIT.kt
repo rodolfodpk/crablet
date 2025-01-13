@@ -153,10 +153,8 @@ class AccountsBatchSinkIT : AbstractCrabletTest() {
     @Test
     @Order(4)
     fun `event sink was called`() {
-        vertx.executeBlocking {
-            latch.await(10, TimeUnit.SECONDS)
-            verify(exactly = 1) { mockBatchEventSink.handle(any<List<JsonObject>>()) }
-        }
+        latch.await(7, TimeUnit.SECONDS)
+        verify(exactly = 1) { mockBatchEventSink.handle(any<List<JsonObject>>()) }
     }
 
     companion object {
