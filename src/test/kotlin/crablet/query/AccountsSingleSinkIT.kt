@@ -153,6 +153,7 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
     @Test
     @Order(4)
     fun `event sink was called`() {
+        dumpEvents()
         latch.await(10, TimeUnit.SECONDS)
         verify(exactly = 5) { mockSingleEventSink.handle(any<JsonObject>()) }
     }
@@ -188,7 +189,7 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
                 container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
                 eventsAppender = CrabletEventsAppender(pool = pool)
                 stateBuilder = CrabletStateBuilder(pool = pool)
-                latch = CountDownLatch(1)
+                latch = CountDownLatch(5)
                 testRepository = TestRepository(client = pool)
                 mockSingleEventSink = mockk<EventSink.SingleEventSink>()
                 every { mockSingleEventSink.handle(any<JsonObject>()) } returns Future.succeededFuture()
