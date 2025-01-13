@@ -13,7 +13,9 @@ import crablet.command.StateName
 import crablet.command.TransactionContext
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
+import crablet.query.AccountsPgSingleSinkIT.Companion
 import crablet.query.impl.CrabletSubscriptionsContainer
+import crablet.query.impl.SubscriptionCommand
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
@@ -152,10 +154,19 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
 
     @Test
     @Order(4)
+    fun `when trying to perform`() =
+        runTest {
+            submitSubscriptionCommand(subscriptionName = source.name, command = SubscriptionCommand.TRY_PERFORM_NOW)
+        }
+
+
+    @Test
+    @Order(5)
     fun `event sink was called`() {
-        dumpEvents()
-        latch.await(10, TimeUnit.SECONDS)
-        verify(exactly = 5) { mockSingleEventSink.handle(any<JsonObject>()) }
+        vertx.executeBlocking {
+            latch.await(7, TimeUnit.SECONDS)
+            verify(exactly = 5) { mockSingleEventSink.handle(any<JsonObject>()) }
+        }
     }
 
     companion object {
@@ -169,6 +180,7 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
         private lateinit var mockSingleEventSink: EventSink.SingleEventSink
 
         private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
+        private val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
 
         private val transactionContextAcct1 =
             TransactionContext(
@@ -194,8 +206,6 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
                 mockSingleEventSink = mockk<EventSink.SingleEventSink>()
                 every { mockSingleEventSink.handle(any<JsonObject>()) } returns Future.succeededFuture()
                 cleanDatabase()
-
-                val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
 
                 val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
                     logger.info("Call back called for {} with {} events", name, list.size)
