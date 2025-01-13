@@ -105,8 +105,12 @@ internal class SubscriptionComponent(
                         updateSequenceId(jsonList, tx)
                             .map { Pair(jsonList, it) }
                     }
-            }.map { (sequenceId, jsonList) ->
-                handleCallback(jsonList, sequenceId)
+            }.map { (jsonList, sequenceId) ->
+                if (jsonList.isNotEmpty()) {
+                    handleCallback(sequenceId, jsonList)
+                } else {
+                    Pair(0L, 0)
+                }
             }
     }
 
