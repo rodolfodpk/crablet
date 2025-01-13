@@ -198,7 +198,9 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
 
                 val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
                     logger.info("Call back called for {} with {} events", name, list.size)
-                    latch.countDown()
+                    if (list.isNotEmpty()) {
+                        latch.countDown()
+                    }
                 }
 
                 val subscriptionConfig =
