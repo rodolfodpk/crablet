@@ -1,6 +1,7 @@
 package crablet.query.impl
 
 import crablet.query.IntervalConfig
+import crablet.query.SubscriptionCommand
 import crablet.query.SubscriptionConfig
 import crablet.query.SubscriptionsContainer
 import io.vertx.core.DeploymentOptions

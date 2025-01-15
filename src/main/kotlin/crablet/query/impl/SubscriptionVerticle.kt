@@ -1,11 +1,12 @@
 package crablet.query.impl
 
 import crablet.query.IntervalConfig
+import crablet.query.SubscriptionCommand
+import crablet.query.SubscriptionCommand.PAUSE
+import crablet.query.SubscriptionCommand.RESUME
+import crablet.query.SubscriptionCommand.SHOW_STATUS
+import crablet.query.SubscriptionCommand.TRY_PERFORM_NOW
 import crablet.query.SubscriptionConfig
-import crablet.query.impl.SubscriptionCommand.PAUSE
-import crablet.query.impl.SubscriptionCommand.RESUME
-import crablet.query.impl.SubscriptionCommand.SHOW_STATUS
-import crablet.query.impl.SubscriptionCommand.TRY_PERFORM_NOW
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.eventbus.Message

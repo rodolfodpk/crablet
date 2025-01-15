@@ -13,7 +13,6 @@ import crablet.command.TransactionContext
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
 import crablet.query.impl.CrabletSubscriptionsContainer
-import crablet.query.impl.SubscriptionCommand
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe

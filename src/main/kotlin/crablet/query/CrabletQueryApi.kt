@@ -1,7 +1,6 @@
 package crablet.query
 
 import crablet.EventName
-import crablet.query.impl.SubscriptionCommand
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.SqlConnection
@@ -68,4 +67,11 @@ interface SubscriptionsContainer {
         subscriptionName: String,
         command: SubscriptionCommand,
     ): JsonObject
+}
+
+enum class SubscriptionCommand {
+    TRY_PERFORM_NOW,
+    PAUSE,
+    RESUME,
+    SHOW_STATUS,
 }
