@@ -4,6 +4,7 @@ import crablet.command.DomainIdentifier
 import crablet.command.StateId
 import crablet.command.StateName
 import crablet.command.TransactionContext
+import crablet.query.SubscriptionSource
 
 interface TestAccountsContext {
     val eventTypes: List<EventName>
@@ -22,4 +23,7 @@ interface TestAccountsContext {
                 identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
                 eventTypes = eventTypes,
             )
+
+    val source: SubscriptionSource
+        get() = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
 }

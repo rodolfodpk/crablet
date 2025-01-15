@@ -4,7 +4,7 @@ import crablet.AbstractCrabletTest
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
-import crablet.TestAccountsSubscriptionContext
+import crablet.TestAccountsContext
 import crablet.command.AppendCondition
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SubscriptionLifecycleIT :
     AbstractCrabletTest(),
-    TestAccountsSubscriptionContext {
+    TestAccountsContext {
     @Test
     @Order(0)
     fun `when starting subscription`() =

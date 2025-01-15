@@ -4,7 +4,7 @@ import crablet.AbstractCrabletTest
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
-import crablet.TestAccountsSubscriptionContext
+import crablet.TestAccountsContext
 import crablet.command.AppendCondition
 import crablet.command.DomainIdentifier
 import crablet.command.StateId
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountsPgSingleSinkIT :
     AbstractCrabletTest(),
-    TestAccountsSubscriptionContext {
+    TestAccountsContext {
     @Test
     @Order(0)
     fun `when setup is done`() =
