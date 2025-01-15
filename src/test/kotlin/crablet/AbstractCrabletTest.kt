@@ -9,7 +9,6 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
 
 abstract class AbstractCrabletTest {
-
     protected val vertx: Vertx = Vertx.vertx()
 
     protected val pool: Pool by lazy {
@@ -66,6 +65,5 @@ abstract class AbstractCrabletTest {
                     withEnv("POSTGRES_LOG_DIRECTORY", "/var/log/pg_log")
                     withLogConsumer { frame -> println(frame.utf8String) }
                 }
-
     }
 }

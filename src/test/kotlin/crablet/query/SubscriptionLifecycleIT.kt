@@ -37,7 +37,7 @@ class SubscriptionLifecycleIT :
     fun `when starting subscription`() =
         runTest {
             testRepository.cleanDatabase()
-            testRepository.dumpEvents()
+            testRepository.dumpAllState()
 
             container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
             eventsAppender = CrabletEventsAppender(pool = pool)

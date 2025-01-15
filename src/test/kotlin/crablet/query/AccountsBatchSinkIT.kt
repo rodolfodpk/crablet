@@ -38,10 +38,10 @@ class AccountsBatchSinkIT :
     TestAccountsContext {
     @Test
     @Order(0)
-    fun `when starting subscription`() =
+    fun `when setup is done`() =
         runTest {
             testRepository.cleanDatabase()
-            testRepository.dumpEvents()
+            testRepository.dumpAllState()
 
             container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
             eventsAppender = CrabletEventsAppender(pool = pool)

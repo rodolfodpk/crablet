@@ -29,12 +29,12 @@ class AccountTransferScenarioTest :
     TestAccountsContext {
     @AfterEach
     fun log() {
-        testRepository.dumpEvents()
+        testRepository.dumpAllState()
     }
 
     @Test
     @Order(0)
-    fun `when starting subscription`() =
+    fun `when starting components`() =
         runTest {
             eventsAppender = CrabletEventsAppender(pool)
             stateBuilder = CrabletStateBuilder(pool = pool)

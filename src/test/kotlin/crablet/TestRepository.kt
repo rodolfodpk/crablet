@@ -23,18 +23,17 @@ class TestRepository(
             }.coAwait()
     }
 
-    fun dumpSubscriptions(): Future<RowSet<Row>>? =
-        pool
-            .query("select * from subscriptions order by name")
-            .execute()
-            .onSuccess { rs ->
-                logger.info("Subscriptions -------------")
-                rs.forEach {
-                    println(it.toJson())
+    fun dumpAllState() {
+        fun dumpSubscriptions(): Future<RowSet<Row>>? =
+            pool
+                .query("select * from subscriptions order by name")
+                .execute()
+                .onSuccess { rs ->
+                    logger.info("Subscriptions -------------")
+                    rs.forEach {
+                        println(it.toJson())
+                    }
                 }
-            }
-
-    fun dumpEvents() {
         pool
             .query("select * from events order by sequence_id")
             .execute()
