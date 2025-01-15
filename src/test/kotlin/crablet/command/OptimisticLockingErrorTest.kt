@@ -1,10 +1,10 @@
 package crablet.command
 
 import crablet.AbstractCrabletTest
-import crablet.EventName
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
+import crablet.TestAccountsContext
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
 import io.kotest.assertions.throwables.shouldThrow
@@ -20,7 +20,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class OptimisticLockingErrorTest : AbstractCrabletTest() {
+class OptimisticLockingErrorTest :
+    AbstractCrabletTest(),
+    TestAccountsContext {
     @Test
     @Order(0)
     fun `when setup is done`() =
@@ -98,10 +100,5 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
     companion object {
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
-        private val transactionContextAcct1 =
-            TransactionContext(
-                identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
-                eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) },
-            )
     }
 }

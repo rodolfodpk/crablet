@@ -1,8 +1,8 @@
 package crablet.command
 
 import crablet.AbstractCrabletTest
-import crablet.EventName
 import crablet.SequenceNumber
+import crablet.TestAccountsContext
 import crablet.command.impl.CrabletEventsAppender
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.ints.shouldBeExactly
@@ -16,7 +16,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class CausationCorrelationIdsTest : AbstractCrabletTest() {
+class CausationCorrelationIdsTest :
+    AbstractCrabletTest(),
+    TestAccountsContext {
     @Test
     @Order(0)
     fun `when setup is done`() =
@@ -99,7 +101,5 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
 
     companion object {
         private lateinit var eventsAppender: CrabletEventsAppender
-
-        private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
     }
 }

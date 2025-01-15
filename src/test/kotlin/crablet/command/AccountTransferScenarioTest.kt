@@ -1,10 +1,10 @@
 package crablet.command
 
 import crablet.AbstractCrabletTest
-import crablet.EventName
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
+import crablet.TestAccountsContext
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
 import io.kotest.matchers.ints.shouldBeExactly
@@ -18,7 +18,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class AccountTransferScenarioTest : AbstractCrabletTest() {
+class AccountTransferScenarioTest :
+    AbstractCrabletTest(),
+    TestAccountsContext {
     @Test
     @Order(0)
     fun `when setup is done`() =
@@ -251,19 +253,5 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
     companion object {
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
-
-        val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
-
-        private val transactionContextAcct1 =
-            TransactionContext(
-                identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
-                eventTypes = eventTypes,
-            )
-
-        private val transactionContextAcct2 =
-            TransactionContext(
-                identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
-                eventTypes = eventTypes,
-            )
     }
 }

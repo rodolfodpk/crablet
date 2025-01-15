@@ -1,10 +1,10 @@
 package crablet.query
 
 import crablet.AbstractCrabletTest
-import crablet.EventName
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
+import crablet.TestAccountsContext
 import crablet.command.AppendCondition
 import crablet.command.DomainIdentifier
 import crablet.command.StateId
@@ -33,7 +33,9 @@ import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AccountsBatchSinkIT : AbstractCrabletTest() {
+class AccountsBatchSinkIT :
+    AbstractCrabletTest(),
+    TestAccountsContext {
     @Test
     @Order(0)
     fun `when starting subscription`() =
@@ -206,19 +208,5 @@ class AccountsBatchSinkIT : AbstractCrabletTest() {
         private lateinit var stateBuilder: CrabletStateBuilder
         private lateinit var latch: CountDownLatch
         private lateinit var mockBatchEventSink: EventSink.BatchEventSink
-
-        private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
-
-        private val transactionContextAcct1 =
-            TransactionContext(
-                identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
-                eventTypes = eventTypes,
-            )
-
-        private val transactionContextAcct2 =
-            TransactionContext(
-                identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
-                eventTypes = eventTypes,
-            )
     }
 }

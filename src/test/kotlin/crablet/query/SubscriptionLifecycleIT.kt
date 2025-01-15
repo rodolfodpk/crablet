@@ -1,15 +1,11 @@
 package crablet.query
 
 import crablet.AbstractCrabletTest
-import crablet.EventName
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
+import crablet.TestAccountsSubscriptionContext
 import crablet.command.AppendCondition
-import crablet.command.DomainIdentifier
-import crablet.command.StateId
-import crablet.command.StateName
-import crablet.command.TransactionContext
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
 import crablet.query.impl.CrabletSubscriptionsContainer
@@ -34,7 +30,9 @@ import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SubscriptionLifecycleIT : AbstractCrabletTest() {
+class SubscriptionLifecycleIT :
+    AbstractCrabletTest(),
+    TestAccountsSubscriptionContext {
     @Test
     @Order(0)
     fun `when starting subscription`() =
@@ -213,14 +211,5 @@ class SubscriptionLifecycleIT : AbstractCrabletTest() {
         private lateinit var stateBuilder: CrabletStateBuilder
         private lateinit var latch: CountDownLatch
         private lateinit var mockSingleEventSink: EventSink.SingleEventSink
-
-        private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
-        private val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
-
-        private val transactionContextAcct2 =
-            TransactionContext(
-                identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
-                eventTypes = eventTypes,
-            )
     }
 }
