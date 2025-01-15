@@ -18,14 +18,14 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class AccountTransferScenarioTest :
+class AccountTransferScenarioIT :
     AbstractCrabletTest(),
     TestAccountsContext {
     @Test
     @Order(0)
     fun `when setup is done`() =
         runTest {
-            eventsAppender = CrabletEventsAppender(pool)
+            eventsAppender = CrabletEventsAppender(pool = pool)
             stateBuilder = CrabletStateBuilder(pool = pool)
             testRepository.cleanDatabase()
         }

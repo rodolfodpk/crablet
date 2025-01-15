@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class CausationCorrelationIdsTest :
+class CausationCorrelationIdsIT :
     AbstractCrabletTest(),
     TestAccountsContext {
     @Test
