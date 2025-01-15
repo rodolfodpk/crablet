@@ -4,6 +4,7 @@ import crablet.query.EventSink
 import crablet.query.SubscriptionConfig
 import io.vertx.core.Future
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.SqlConnection
@@ -96,6 +97,7 @@ internal class SubscriptionComponent(
                         logger.info("Subscription {} found {} events", subscriptionConfig.source.name, rowSet.size())
                         rowSet.map { row -> row.toJson() }
                     }.compose { jsonList: List<JsonObject> ->
+                        logger.info("Events found: {}", JsonArray(jsonList).encodePrettily())
                         handleEventSink(jsonList, tx)
                     }.compose { jsonList: List<JsonObject> ->
                         updateSequenceId(jsonList, tx)

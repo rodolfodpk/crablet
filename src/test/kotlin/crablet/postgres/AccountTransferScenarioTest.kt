@@ -18,7 +18,6 @@ import io.kotest.matchers.shouldBe
 import io.vertx.core.json.JsonObject
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -28,8 +27,17 @@ import org.junit.jupiter.api.TestMethodOrder
 class AccountTransferScenarioTest : AbstractCrabletTest() {
     @AfterEach
     fun log() {
-        dumpEvents()
+        testRepository.dumpEvents()
     }
+
+    @Test
+    @Order(0)
+    fun `when starting subscription`() =
+        runTest {
+            eventsAppender = CrabletEventsAppender(pool)
+            stateBuilder = CrabletStateBuilder(pool = pool)
+            testRepository.cleanDatabase()
+        }
 
     @Test
     @Order(1)
@@ -268,14 +276,5 @@ class AccountTransferScenarioTest : AbstractCrabletTest() {
                 identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
                 eventTypes = eventTypes,
             )
-
-        @BeforeAll
-        @JvmStatic
-        fun setUp() =
-            runTest {
-                eventsAppender = CrabletEventsAppender(pool)
-                stateBuilder = CrabletStateBuilder(pool = pool)
-                cleanDatabase()
-            }
     }
 }

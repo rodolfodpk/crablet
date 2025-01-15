@@ -14,7 +14,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.vertx.core.json.JsonObject
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -22,6 +21,15 @@ import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class OptimisticLockingErrorTest : AbstractCrabletTest() {
+    @Test
+    @Order(0)
+    fun `when setup is done`() =
+        runTest {
+            eventsAppender = CrabletEventsAppender(pool)
+            stateBuilder = CrabletStateBuilder(pool = pool)
+            testRepository.cleanDatabase()
+        }
+
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`() =
@@ -95,14 +103,5 @@ class OptimisticLockingErrorTest : AbstractCrabletTest() {
                 identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("1"))),
                 eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) },
             )
-
-        @BeforeAll
-        @JvmStatic
-        fun setUp() =
-            runTest {
-                eventsAppender = CrabletEventsAppender(pool)
-                stateBuilder = CrabletStateBuilder(pool = pool)
-                cleanDatabase()
-            }
     }
 }

@@ -5,7 +5,6 @@ import crablet.EventName
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
-import crablet.TestRepository
 import crablet.command.AppendCondition
 import crablet.command.DomainIdentifier
 import crablet.command.StateId
@@ -23,17 +22,59 @@ import io.mockk.verify
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestMethodOrder
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AccountsBatchSinkIT : AbstractCrabletTest() {
+    @Test
+    @Order(0)
+    fun `when starting subscription`() =
+        runTest {
+            testRepository.cleanDatabase()
+            testRepository.dumpEvents()
+
+            container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
+            eventsAppender = CrabletEventsAppender(pool = pool)
+            stateBuilder = CrabletStateBuilder(pool = pool)
+            container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
+            eventsAppender = CrabletEventsAppender(pool = pool)
+            stateBuilder = CrabletStateBuilder(pool = pool)
+            latch = CountDownLatch(1)
+            mockBatchEventSink = mockk<EventSink.BatchEventSink>()
+            every { mockBatchEventSink.handle(any<List<JsonObject>>()) } returns Future.succeededFuture()
+            testRepository.cleanDatabase()
+
+            val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
+
+            val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
+                logger.info("Call back called for {} with {} events", name, list.size)
+                if (list.isNotEmpty()) {
+                    latch.countDown()
+                }
+            }
+
+            val subscriptionConfig =
+                SubscriptionConfig(
+                    source = source,
+                    eventSink = mockBatchEventSink,
+                    callback = callback,
+                )
+
+            container.addSubscription(
+                subscriptionConfig = subscriptionConfig,
+                intervalConfig = IntervalConfig(initialInterval = 100, interval = 100),
+            )
+            container.deployAll()
+        }
+
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`() =
@@ -164,7 +205,6 @@ class AccountsBatchSinkIT : AbstractCrabletTest() {
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
         private lateinit var latch: CountDownLatch
-        private lateinit var testRepository: TestRepository
         private lateinit var mockBatchEventSink: EventSink.BatchEventSink
 
         private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
@@ -180,41 +220,5 @@ class AccountsBatchSinkIT : AbstractCrabletTest() {
                 identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
                 eventTypes = eventTypes,
             )
-
-        @BeforeAll
-        @JvmStatic
-        fun setUp() =
-            runTest {
-                container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
-                eventsAppender = CrabletEventsAppender(pool = pool)
-                stateBuilder = CrabletStateBuilder(pool = pool)
-                latch = CountDownLatch(1)
-                testRepository = TestRepository(client = pool)
-                mockBatchEventSink = mockk<EventSink.BatchEventSink>()
-                every { mockBatchEventSink.handle(any<List<JsonObject>>()) } returns Future.succeededFuture()
-                cleanDatabase()
-
-                val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
-
-                val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
-                    logger.info("Call back called for {} with {} events", name, list.size)
-                    if (list.isNotEmpty()) {
-                        latch.countDown()
-                    }
-                }
-
-                val subscriptionConfig =
-                    SubscriptionConfig(
-                        source = source,
-                        eventSink = mockBatchEventSink,
-                        callback = callback,
-                    )
-
-                container.addSubscription(
-                    subscriptionConfig = subscriptionConfig,
-                    intervalConfig = IntervalConfig(initialInterval = 100, interval = 100),
-                )
-                container.deployAll()
-            }
     }
 }

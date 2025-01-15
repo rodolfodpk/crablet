@@ -1,8 +1,6 @@
 package crablet
 
-import crablet.query.impl.SubscriptionCommand
 import io.vertx.core.Vertx
-import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.PoolOptions
@@ -11,11 +9,27 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile
 
 abstract class AbstractCrabletTest {
+    protected val vertx: Vertx = Vertx.vertx()
+
+    protected val pool: Pool by lazy {
+        postgresqlContainer.start()
+        val connectOptions =
+            PgConnectOptions()
+                .setPort(if (postgresqlContainer.isRunning) postgresqlContainer.firstMappedPort else 5432)
+                .setHost("127.0.0.1")
+                .setDatabase(DB_NAME)
+                .setUser(DB_USERNAME)
+                .setPassword(DB_PASSWORD)
+        val poolOptions = PoolOptions().setMaxSize(5)
+        Pool.pool(vertx, connectOptions, poolOptions)
+    }
+
+    protected val testRepository: TestRepository by lazy {
+        TestRepository(pool)
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(AbstractCrabletTest::class.java)
-
-        @JvmStatic
-        protected val vertx: Vertx = Vertx.vertx()
 
         val PG_DOCKER_IMAGE = "postgres:latest"
         val DB_NAME = "postgres"
@@ -51,54 +65,5 @@ abstract class AbstractCrabletTest {
                     withEnv("POSTGRES_LOG_DIRECTORY", "/var/log/pg_log")
                     withLogConsumer { frame -> println(frame.utf8String) }
                 }
-
-        val pool: Pool by lazy {
-            postgresqlContainer.start()
-            val connectOptions =
-                PgConnectOptions()
-                    .setPort(if (postgresqlContainer.isRunning) postgresqlContainer.firstMappedPort else 5432)
-                    .setHost("127.0.0.1")
-                    .setDatabase(DB_NAME)
-                    .setUser(DB_USERNAME)
-                    .setPassword(DB_PASSWORD)
-            val poolOptions = PoolOptions().setMaxSize(5)
-            Pool.pool(vertx, connectOptions, poolOptions)
-        }
-
-        suspend fun cleanDatabase() {
-            logger.info("Cleaning database -------------")
-            pool
-                .query("TRUNCATE TABLE events")
-                .execute()
-                .compose {
-                    pool.query("ALTER SEQUENCE events_sequence_id_seq RESTART WITH 1").execute()
-                }.coAwait()
-        }
-
-        fun dumpEvents() {
-            pool
-                .query("select * from events order by sequence_id")
-                .execute()
-                .onSuccess { rs ->
-                    logger.info("Events -------------")
-                    rs.forEach {
-                        println(it.toJson())
-                    }
-                }.await()
-        }
-
-        suspend fun submitSubscriptionCommand(
-            subscriptionName: String,
-            command: SubscriptionCommand,
-        ) {
-            val eventBus = vertx.eventBus()
-            eventBus
-                .request<SubscriptionCommand>("$subscriptionName@subscriptions", command)
-                .onSuccess {
-                    logger.info("Command result {}", it.body())
-                }.onFailure {
-                    logger.error("Command error", it)
-                }.coAwait()
-        }
     }
 }

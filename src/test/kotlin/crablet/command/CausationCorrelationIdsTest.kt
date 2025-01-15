@@ -3,7 +3,6 @@ package crablet.command
 import crablet.AbstractCrabletTest
 import crablet.EventName
 import crablet.SequenceNumber
-import crablet.TestRepository
 import crablet.command.impl.CrabletEventsAppender
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.ints.shouldBeExactly
@@ -11,7 +10,6 @@ import io.kotest.matchers.longs.shouldBeExactly
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.coroutines.coAwait
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -19,6 +17,14 @@ import org.junit.jupiter.api.TestMethodOrder
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class CausationCorrelationIdsTest : AbstractCrabletTest() {
+    @Test
+    @Order(0)
+    fun `when setup is done`() =
+        runTest {
+            eventsAppender = CrabletEventsAppender(pool)
+            testRepository.cleanDatabase()
+        }
+
     @Test
     @Order(1)
     fun `it can open Account 1 with correct IDs`() =
@@ -93,17 +99,7 @@ class CausationCorrelationIdsTest : AbstractCrabletTest() {
 
     companion object {
         private lateinit var eventsAppender: CrabletEventsAppender
-        private lateinit var testRepository: TestRepository
 
         private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
-
-        @BeforeAll
-        @JvmStatic
-        fun setUp() =
-            runTest {
-                eventsAppender = CrabletEventsAppender(pool)
-                testRepository = TestRepository(pool)
-                cleanDatabase()
-            }
     }
 }

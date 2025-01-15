@@ -5,7 +5,6 @@ import crablet.EventName
 import crablet.SequenceNumber
 import crablet.TestAccountDomain.evolveFunction
 import crablet.TestAccountDomain.initialStateFunction
-import crablet.TestRepository
 import crablet.command.AppendCondition
 import crablet.command.DomainIdentifier
 import crablet.command.StateId
@@ -13,7 +12,6 @@ import crablet.command.StateName
 import crablet.command.TransactionContext
 import crablet.command.impl.CrabletEventsAppender
 import crablet.command.impl.CrabletStateBuilder
-import crablet.query.AccountsPgSingleSinkIT.Companion
 import crablet.query.impl.CrabletSubscriptionsContainer
 import crablet.query.impl.SubscriptionCommand
 import io.kotest.matchers.ints.shouldBeExactly
@@ -25,7 +23,6 @@ import io.mockk.verify
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
@@ -36,6 +33,39 @@ import java.util.concurrent.TimeUnit
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class AccountsSingleSinkIT : AbstractCrabletTest() {
+    @Test
+    @Order(0)
+    fun `when setup is done`() =
+        runTest {
+            container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
+            eventsAppender = CrabletEventsAppender(pool = pool)
+            stateBuilder = CrabletStateBuilder(pool = pool)
+            latch = CountDownLatch(5)
+            mockSingleEventSink = mockk<EventSink.SingleEventSink>()
+            every { mockSingleEventSink.handle(any<JsonObject>()) } returns Future.succeededFuture()
+            testRepository.cleanDatabase()
+
+            val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
+                logger.info("Call back called for {} with {} events", name, list.size)
+                if (list.isNotEmpty()) {
+                    latch.countDown()
+                }
+            }
+
+            val subscriptionConfig =
+                SubscriptionConfig(
+                    source = source,
+                    eventSink = mockSingleEventSink,
+                    callback = callback,
+                )
+
+            container.addSubscription(
+                subscriptionConfig = subscriptionConfig,
+                intervalConfig = IntervalConfig(initialInterval = 5000, interval = 1000),
+            )
+            container.deployAll()
+        }
+
     @Test
     @Order(1)
     fun `it can open Account 1 with $100`() =
@@ -156,9 +186,8 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
     @Order(4)
     fun `when trying to perform`() =
         runTest {
-            submitSubscriptionCommand(subscriptionName = source.name, command = SubscriptionCommand.TRY_PERFORM_NOW)
+            container.submitSubscriptionCommand(subscriptionName = source.name, command = SubscriptionCommand.TRY_PERFORM_NOW)
         }
-
 
     @Test
     @Order(5)
@@ -176,7 +205,6 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
         private lateinit var eventsAppender: CrabletEventsAppender
         private lateinit var stateBuilder: CrabletStateBuilder
         private lateinit var latch: CountDownLatch
-        private lateinit var testRepository: TestRepository
         private lateinit var mockSingleEventSink: EventSink.SingleEventSink
 
         private val eventTypes = listOf("AccountOpened", "AmountDeposited", "AmountTransferred").map { EventName(it) }
@@ -193,39 +221,5 @@ class AccountsSingleSinkIT : AbstractCrabletTest() {
                 identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("2"))),
                 eventTypes = eventTypes,
             )
-
-        @BeforeAll
-        @JvmStatic
-        fun setUp() =
-            runTest {
-                container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
-                eventsAppender = CrabletEventsAppender(pool = pool)
-                stateBuilder = CrabletStateBuilder(pool = pool)
-                latch = CountDownLatch(5)
-                testRepository = TestRepository(client = pool)
-                mockSingleEventSink = mockk<EventSink.SingleEventSink>()
-                every { mockSingleEventSink.handle(any<JsonObject>()) } returns Future.succeededFuture()
-                cleanDatabase()
-
-                val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
-                    logger.info("Call back called for {} with {} events", name, list.size)
-                    if (list.isNotEmpty()) {
-                        latch.countDown()
-                    }
-                }
-
-                val subscriptionConfig =
-                    SubscriptionConfig(
-                        source = source,
-                        eventSink = mockSingleEventSink,
-                        callback = callback,
-                    )
-
-                container.addSubscription(
-                    subscriptionConfig = subscriptionConfig,
-                    intervalConfig = IntervalConfig(initialInterval = 5000, interval = 1000),
-                )
-                container.deployAll()
-            }
     }
 }

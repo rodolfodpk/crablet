@@ -11,7 +11,6 @@ import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
-import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
@@ -26,7 +25,7 @@ internal class SubscriptionVerticle(
     private val backOff = AtomicLong(0L)
     private val isPaused = AtomicBoolean(false)
     private val isBusy = AtomicBoolean(false)
-    private var lastSequenceId = 0L
+    private var lastSequenceId = AtomicLong(0L)
 
     override fun start() {
         logger.info("Starting subscription for {}", subscriptionConfig.source.name)
@@ -40,8 +39,7 @@ internal class SubscriptionVerticle(
             logger.info("Endpoint {} received command {}", endpointAddress, command)
             try {
                 commandHandler(command)
-                val currentStatus = currentStatus()
-                message.reply(currentStatus)
+                message.reply(currentStatus())
             } catch (e: Exception) {
                 message.fail(0, "Error on command ${command.name}")
             }
@@ -51,8 +49,8 @@ internal class SubscriptionVerticle(
     private fun commandHandler(command: SubscriptionCommand) {
         when (command) {
             TRY_PERFORM_NOW -> handler.invoke(0)
-            PAUSE -> TODO()
-            RESUME -> TODO()
+            PAUSE -> isPaused.set(true)
+            RESUME -> isPaused.set(false)
             SHOW_STATUS -> { /* just return status */ }
         }
     }
@@ -80,13 +78,11 @@ internal class SubscriptionVerticle(
 
     private fun proceed(): Future<Void> {
         isBusy.set(true)
-        if (logger.isTraceEnabled) {
-            logger.trace(
-                "Scanning for new events for subscription {}. Last sequence {}",
-                subscriptionConfig.source.name,
-                lastSequenceId,
-            )
-        }
+        logger.info(
+            "Scanning for new events for subscription {}. Last sequence {}",
+            subscriptionConfig.source.name,
+            lastSequenceId.get(),
+        )
         return subscriptionComponent
             .handlePendingEvents(subscriptionConfig)
             .onSuccess { (sequenceId, howManyNewEvents) ->
@@ -114,7 +110,8 @@ internal class SubscriptionVerticle(
     }
 
     private fun registerSuccess(eventSequence: Long) {
-        lastSequenceId = eventSequence
+        logger.info("WIll update lastSequenceId to {}", eventSequence)
+        lastSequenceId.set(eventSequence)
         failures.set(0)
         backOff.set(0)
         val nextInterval = if (greedy.get()) greedInterval().invoke() else intervalConfig.interval
@@ -133,16 +130,15 @@ internal class SubscriptionVerticle(
 
     private fun currentStatus(): JsonObject =
         JsonObject()
-            .put("node", jmxBeanName)
+            .put("subscriptionName", subscriptionConfig.source.name)
             .put("paused", isPaused.get())
             .put("busy", isBusy.get())
             .put("greedy", greedy.get())
             .put("failures", failures.get())
             .put("backOff", backOff.get())
-            .put("currentOffset", lastSequenceId)
+            .put("currentOffset", lastSequenceId.get())
 
     companion object {
-        private val jmxBeanName: String = ManagementFactory.getRuntimeMXBean().name
         private val logger = LoggerFactory.getLogger(SubscriptionVerticle::class.java)
 
         private fun greedInterval(): () -> Long = { (1..7).random() * 100L }
