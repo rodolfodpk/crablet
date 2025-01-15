@@ -10,7 +10,7 @@ CREATE SEQUENCE events_sequence_id_seq minvalue 1 start with 1 cache 10;
 CREATE TABLE events
 (
     sequence_id    BIGINT PRIMARY KEY                     NOT NULL,
-    event_type     VARCHAR(100)                           NOT NULL,
+    event_type     VARCHAR(120)                           NOT NULL,
     event_payload  JSON                                   NOT NULL,
     domain_ids     TEXT[]                                 NOT NULL,
     causation_id   BIGINT REFERENCES events (sequence_id),
