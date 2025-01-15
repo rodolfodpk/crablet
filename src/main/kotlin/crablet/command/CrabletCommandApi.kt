@@ -19,9 +19,9 @@ data class DomainIdentifier(
     val id: StateId,
 ) {
     fun toStorageFormat(): String =
-        this.name.value
+        this.id.value
             .plus("@")
-            .plus(this.id.value)
+            .plus(this.name.value)
 }
 
 data class TransactionContext(

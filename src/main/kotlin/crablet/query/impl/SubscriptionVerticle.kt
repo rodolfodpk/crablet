@@ -110,7 +110,7 @@ internal class SubscriptionVerticle(
     }
 
     private fun registerSuccess(eventSequence: Long) {
-        logger.info("WIll update lastSequenceId to {}", eventSequence)
+        logger.info("Will update lastSequenceId to {}", eventSequence)
         lastSequenceId.set(eventSequence)
         failures.set(0)
         backOff.set(0)

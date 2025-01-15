@@ -149,7 +149,7 @@ class SubscriptionLifecycleIT :
 
     @Test
     @Order(6)
-    fun `when resuming it, the status is paused`() =
+    fun `when resuming it, the status is NOT paused`() =
         runTest {
             val actualStatus = container.submitSubscriptionCommand(subscriptionName = source.name, command = SubscriptionCommand.RESUME)
             actualStatus.getString("subscriptionName") shouldBe "accounts-view"
@@ -189,7 +189,7 @@ class SubscriptionLifecycleIT :
 
     @Test
     @Order(9)
-    fun `then the view model and subscriptions are correct again`() {
+    fun `then the view model and subscriptions are updated`() {
         vertx.executeBlocking {
             latch.await(7, TimeUnit.SECONDS)
 
