@@ -35,13 +35,13 @@ class AccountsViewProjectionTest :
     @Order(0)
     fun `when setup is done`() =
         runTest {
+            testRepository.cleanDatabase()
+
             container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
             eventsAppender = CrabletEventsAppender(pool = pool)
             stateBuilder = CrabletStateBuilder(pool = pool)
+
             latch = CountDownLatch(1)
-
-            testRepository.cleanDatabase()
-
             val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
                 logger.info("Call back called for {} with {} events", name, list.size)
                 if (list.isNotEmpty()) {

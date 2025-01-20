@@ -39,7 +39,9 @@ class SubscriptionConfig(
     val source: SubscriptionSource,
     val eventSink: EventSink,
     val callback: ((name: String, List<JsonObject>) -> Unit)? = null,
-)
+) {
+    fun name() = source.name
+}
 
 data class IntervalConfig(
     val initialInterval: Long = DEFAULT_INITIAL_INTERVAL,

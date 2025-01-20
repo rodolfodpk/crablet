@@ -43,19 +43,14 @@ class AccountsBatchSinkIT :
             testRepository.cleanDatabase()
             testRepository.dumpAllState()
 
-            container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
             eventsAppender = CrabletEventsAppender(pool = pool)
             stateBuilder = CrabletStateBuilder(pool = pool)
             container = CrabletSubscriptionsContainer(vertx = vertx, pool = pool)
-            eventsAppender = CrabletEventsAppender(pool = pool)
-            stateBuilder = CrabletStateBuilder(pool = pool)
-            latch = CountDownLatch(1)
+
             mockBatchEventSink = mockk<EventSink.BatchEventSink>()
             every { mockBatchEventSink.handle(any<List<JsonObject>>()) } returns Future.succeededFuture()
-            testRepository.cleanDatabase()
 
-            val source = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
-
+            latch = CountDownLatch(1)
             val callback: (name: String, list: List<JsonObject>) -> Unit = { name, list ->
                 logger.info("Call back called for {} with {} events", name, list.size)
                 if (list.isNotEmpty()) {

@@ -49,16 +49,16 @@ internal class SubscriptionComponent(
                 val newSequenceId: Long = last.getLong("sequence_id")
                 logger.info(
                     "Subscription {} found {} events. Will update sequenceId to {}",
-                    subscriptionConfig.source.name,
+                    subscriptionConfig.name(),
                     jsonList.size,
                     newSequenceId,
                 )
                 tx
                     .preparedQuery(SQL_UPDATE_OFFSET)
-                    .execute(Tuple.of(subscriptionConfig.source.name, newSequenceId))
+                    .execute(Tuple.of(subscriptionConfig.name(), newSequenceId))
                     .map { newSequenceId }
             } else {
-                logger.debug("View {} found zero events", subscriptionConfig.source.name)
+                logger.debug("View {} found zero events", subscriptionConfig.name())
                 Future.succeededFuture(0L)
             }
 
@@ -71,14 +71,14 @@ internal class SubscriptionComponent(
                     try {
                         logger.info(
                             "Subscription {} found {} events. Will invoke callback function",
-                            subscriptionConfig.source.name,
+                            subscriptionConfig.name(),
                             jsonList.size,
                         )
-                        subscriptionConfig.callback.invoke(subscriptionConfig.source.name, jsonList)
+                        subscriptionConfig.callback.invoke(subscriptionConfig.name(), jsonList)
                     } catch (exception: RuntimeException) {
                         logger.info(
                             "Error on callback for {} with {} events",
-                            subscriptionConfig.source.name,
+                            subscriptionConfig.name(),
                             jsonList.size,
                         )
                     }
@@ -92,9 +92,9 @@ internal class SubscriptionComponent(
             .withTransaction { tx: SqlConnection ->
                 tx
                     .preparedQuery(SQL_EVENTS_QUERY)
-                    .execute(Tuple.of(subscriptionConfig.source.name))
+                    .execute(Tuple.of(subscriptionConfig.name()))
                     .map { rowSet ->
-                        logger.info("Subscription {} found {} events", subscriptionConfig.source.name, rowSet.size())
+                        logger.info("Subscription {} found {} events", subscriptionConfig.name(), rowSet.size())
                         rowSet.map { row -> row.toJson() }
                     }.compose { jsonList: List<JsonObject> ->
                         logger.info("Events found: {}", JsonArray(jsonList).encodePrettily())

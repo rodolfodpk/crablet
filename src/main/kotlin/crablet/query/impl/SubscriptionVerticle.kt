@@ -29,11 +29,11 @@ internal class SubscriptionVerticle(
     private var lastSequenceId = AtomicLong(0L)
 
     override fun start() {
-        logger.info("Starting subscription for {}", subscriptionConfig.source.name)
+        logger.info("Starting subscription for {}", subscriptionConfig.name())
         vertx.setTimer(intervalConfig.initialInterval, handler)
         val eventBus = vertx.eventBus()
 
-        val endpointAddress = "${subscriptionConfig.source.name}@subscriptions"
+        val endpointAddress = "${subscriptionConfig.name()}@subscriptions"
         val consumer = eventBus.localConsumer<SubscriptionCommand>(endpointAddress)
         consumer.handler { message: Message<SubscriptionCommand> ->
             val command = message.body()
@@ -70,9 +70,6 @@ internal class SubscriptionVerticle(
     private fun justReschedule() {
         vertx.setTimer(intervalConfig.interval, handler)
         if (logger.isTraceEnabled) {
-            logger.trace("It is busy=$isBusy or paused=$isPaused. Will just reschedule.")
-        }
-        if (logger.isTraceEnabled) {
             logger.trace("justReschedule - Rescheduled to next {} milliseconds", intervalConfig.interval)
         }
     }
@@ -81,7 +78,7 @@ internal class SubscriptionVerticle(
         isBusy.set(true)
         logger.info(
             "Scanning for new events for subscription {}. Last sequence {}",
-            subscriptionConfig.source.name,
+            subscriptionConfig.name(),
             lastSequenceId.get(),
         )
         return subscriptionComponent
@@ -131,7 +128,7 @@ internal class SubscriptionVerticle(
 
     private fun currentStatus(): JsonObject =
         JsonObject()
-            .put("subscriptionName", subscriptionConfig.source.name)
+            .put("subscriptionName", subscriptionConfig.name())
             .put("paused", isPaused.get())
             .put("busy", isBusy.get())
             .put("greedy", greedy.get())

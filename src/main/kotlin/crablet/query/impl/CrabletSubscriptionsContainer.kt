@@ -22,7 +22,7 @@ class CrabletSubscriptionsContainer(
         subscriptionConfig: SubscriptionConfig,
         intervalConfig: IntervalConfig,
     ) {
-        subscriptions[subscriptionConfig.source.name] = Pair(subscriptionConfig, intervalConfig)
+        subscriptions[subscriptionConfig.name()] = Pair(subscriptionConfig, intervalConfig)
     }
 
     override suspend fun deployAll() {
@@ -31,7 +31,7 @@ class CrabletSubscriptionsContainer(
         subscriptions.values
             .map { (subscriptionConfig, intervalConfig) ->
                 Pair(
-                    subscriptionConfig.source.name,
+                    subscriptionConfig.name(),
                     SubscriptionVerticle(
                         subscriptionConfig = subscriptionConfig,
                         intervalConfig = intervalConfig,

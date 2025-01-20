@@ -8,7 +8,7 @@ object TestAccountDomain {
         val balance: Int = 0,
     )
 
-    val initialStateFunction = { Account() }
+    val initialStateFunction: () -> Account = { Account() }
 
     val evolveFunction: (Account, JsonObject) -> Account = { state, event ->
         when (event.getString("type")) {
