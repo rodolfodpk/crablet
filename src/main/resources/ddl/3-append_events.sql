@@ -17,6 +17,10 @@ DECLARE
     _isLockAcquired         BOOLEAN;
     _newSequenceIds         BIGINT[];
 BEGIN
+
+    -- Print current transaction isolation level
+    -- RAISE NOTICE 'Current Transaction Isolation Level: %', current_setting('transaction_isolation');
+
     -- Sort domain ids
     SELECT ARRAY(SELECT UNNEST(_domain_ids) ORDER BY 1) INTO _domain_ids;
 
@@ -40,9 +44,9 @@ BEGIN
     ELSE
         _causationId := _lastEventSequenceId;
         _correlationId := _lastEventCorrelationId; -- Same correlation_id as the last event
-        _isLockAcquired := pg_try_advisory_xact_lock(_correlationId);
+        _isLockAcquired := pg_try_advisory_xact_lock(get_hash(_domain_ids));
         IF NOT _isLockAcquired THEN
-            RAISE EXCEPTION 'Failed to acquire lock for _correlationId: %', _correlationId;
+            RAISE EXCEPTION 'Failed to acquire lock for _domain_ids: %', _domain_ids;
         END IF;
         SELECT ARRAY(SELECT nextval('events_sequence_id_seq') FROM generate_series(1, array_length(_event_payloads, 1)))
         INTO _newSequenceIds;
