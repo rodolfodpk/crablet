@@ -101,7 +101,7 @@ class LockingPolicyIT :
 
     @Test
     @Order(4)
-    fun `it can open Account 2 with 50 using DOMAIN_IDS_HASH as Locking Policy`() =
+    fun `it can open Account 2 with 50 using CORRELATION_ID as Locking Policy`() =
         runTest {
             val expectedSequence = 6L // because 1 sequence was generated but not used:
             // expectedCurrentSequence does not match
@@ -110,7 +110,7 @@ class LockingPolicyIT :
                 AppendCondition(
                     transactionContext = transactionContextAcct2,
                     expectedCurrentSequence = SequenceNumber(0),
-                    lockingPolicy = LockingPolicy.DOMAIN_IDS_HASH,
+                    lockingPolicy = LockingPolicy.CORRELATION_ID,
                 )
             val eventsToAppend =
                 listOf(
@@ -135,7 +135,7 @@ class LockingPolicyIT :
 
     @Test
     @Order(5)
-    fun `it can open Account 3 with 0 using LAST_SEQUENCE_ID as Locking Policy`() =
+    fun `it can open Account 3 with 0 using LATEST_SEQUENCE_ID as Locking Policy`() =
         runTest {
             val expectedSequence = 7L
 

@@ -32,9 +32,9 @@ data class TransactionContext(
 enum class LockingPolicy(
     val lockId: Int,
 ) {
-    LATEST_SEQUENCE_ID(1), // latest sequence_id within the stream that can contain N aggregate roots
-    CORRELATION_ID(2), // only for single aggregate transactions
-    DOMAIN_IDS_HASH(3), // hash of the domain_ids: the most restrictive mode
+    DOMAIN_IDS_HASH(1), // hash of the domain_ids: the most restrictive mode
+    LATEST_SEQUENCE_ID(2), // latest sequence_id within the stream that can contain N aggregate roots
+    CORRELATION_ID(3), // only for single aggregate transactions
 }
 
 data class AppendCondition(
