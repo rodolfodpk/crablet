@@ -47,7 +47,7 @@ BEGIN
         _correlationId := _lastEventCorrelationId; -- Same correlation_id as the last event
 
         -- Adjusted part starts here
-        IF _lock_on_last_event_sequence = 1 THEN -- LASTEST_SEQUENCE_ID
+        IF _lock_on_last_event_sequence = 1 THEN -- LATEST_SEQUENCE_ID
             _isLockAcquired := pg_try_advisory_xact_lock(_lastEventSequenceId);
         ELSIF _lock_on_last_event_sequence = 2 THEN -- DOMAIN_IDS_HASH
             _isLockAcquired := pg_try_advisory_xact_lock(get_hash(_domain_ids));

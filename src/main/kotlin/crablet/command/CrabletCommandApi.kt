@@ -32,7 +32,7 @@ data class TransactionContext(
 enum class LockingPolicy(
     val lockId: Int,
 ) {
-    LASTEST_SEQUENCE_ID(1),
+    LATEST_SEQUENCE_ID(1),
     CORRELATION_ID(2),
     DOMAIN_IDS_HASH(3),
 }
@@ -40,7 +40,7 @@ enum class LockingPolicy(
 data class AppendCondition(
     val transactionContext: TransactionContext,
     val expectedCurrentSequence: SequenceNumber,
-    val lockingPolicy: LockingPolicy = LockingPolicy.LASTEST_SEQUENCE_ID,
+    val lockingPolicy: LockingPolicy = LockingPolicy.LATEST_SEQUENCE_ID,
 ) {
     fun lockId() = lockingPolicy.lockId
 }
