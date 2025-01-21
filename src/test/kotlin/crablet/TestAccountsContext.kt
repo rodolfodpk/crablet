@@ -24,6 +24,13 @@ interface TestAccountsContext {
                 eventTypes = eventTypes,
             )
 
+    val transactionContextAcct3: TransactionContext
+        get() =
+            TransactionContext(
+                identifiers = listOf(DomainIdentifier(name = StateName("Account"), id = StateId("3"))),
+                eventTypes = eventTypes,
+            )
+
     val source: SubscriptionSource
         get() = SubscriptionSource(name = "accounts-view", eventTypes = eventTypes)
 }

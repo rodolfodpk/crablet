@@ -36,6 +36,7 @@ class CrabletEventsAppender(
         appendCondition.expectedCurrentSequence.value,
         eventTypesToArray(appendCondition.transactionContext.eventTypes),
         eventPayloadsToArray(events),
+        appendCondition.lockId(),
     )
 
     private fun identifiersToSortedArray(identifiers: List<DomainIdentifier>) =
@@ -50,7 +51,7 @@ class CrabletEventsAppender(
         params: Tuple,
     ): Future<RowSet<Row>> =
         connection
-            .preparedQuery("SELECT append_events($1, $2, $3, $4) AS $LAST_SEQUENCE_ID")
+            .preparedQuery("SELECT append_events($1, $2, $3, $4, $5) AS $LAST_SEQUENCE_ID")
             .execute(params)
 
     private fun processRowSet(rowSet: RowSet<Row>): Future<SequenceNumber>? {

@@ -2,7 +2,8 @@ CREATE OR REPLACE FUNCTION append_events(
     _domain_ids TEXT[],
     _expected_sequence_id BIGINT,
     _event_types TEXT[],
-    _event_payloads TEXT[]
+    _event_payloads TEXT[],
+    _lock_on_last_event_sequence INT DEFAULT 1 -- less conflicts, concurrency
 ) RETURNS BIGINT
     LANGUAGE plpgsql
 AS
@@ -44,10 +45,27 @@ BEGIN
     ELSE
         _causationId := _lastEventSequenceId;
         _correlationId := _lastEventCorrelationId; -- Same correlation_id as the last event
-        _isLockAcquired := pg_try_advisory_xact_lock(get_hash(_domain_ids));
-        IF NOT _isLockAcquired THEN
-            RAISE EXCEPTION 'Failed to acquire lock for _domain_ids: %', _domain_ids;
+
+        -- Adjusted part starts here
+        IF _lock_on_last_event_sequence = 1 THEN -- LASTEST_SEQUENCE_ID
+            _isLockAcquired := pg_try_advisory_xact_lock(_lastEventSequenceId);
+        ELSIF _lock_on_last_event_sequence = 2 THEN -- DOMAIN_IDS_HASH
+            _isLockAcquired := pg_try_advisory_xact_lock(get_hash(_domain_ids));
+        ELSIF _lock_on_last_event_sequence = 3 THEN --CORRELATION_ID
+            _isLockAcquired := pg_try_advisory_xact_lock(_lastEventCorrelationId);
         END IF;
+
+        IF NOT _isLockAcquired THEN
+            IF _lock_on_last_event_sequence = 1 THEN
+                RAISE EXCEPTION 'Failed to acquire lock for _lastEventSequenceId: %', _lastEventSequenceId;
+            ELSIF _lock_on_last_event_sequence = 2 THEN
+                RAISE EXCEPTION 'Failed to acquire lock for _domain_ids: %', _domain_ids;
+            ELSIF _lock_on_last_event_sequence = 3 THEN
+                RAISE EXCEPTION 'Failed to acquire lock for _lastEventCorrelationId: %', _lastEventCorrelationId;
+            END IF;
+        END IF;
+
+
         SELECT ARRAY(SELECT nextval('events_sequence_id_seq') FROM generate_series(1, array_length(_event_payloads, 1)))
         INTO _newSequenceIds;
     END IF;
