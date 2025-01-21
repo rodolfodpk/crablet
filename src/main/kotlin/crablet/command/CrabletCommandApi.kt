@@ -33,7 +33,7 @@ enum class LockingPolicy(
     val lockId: Int,
 ) {
     LATEST_SEQUENCE_ID(1),
-    CORRELATION_ID(2),
+    CORRELATION_ID(2), // only for single aggregate transactions
     DOMAIN_IDS_HASH(3),
 }
 
