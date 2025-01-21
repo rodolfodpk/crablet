@@ -36,7 +36,7 @@ class LockingPolicyIT :
 
     @Test
     @Order(1)
-    fun `it can open Account 1 with $100 using default lockingPolicy LAST_SEQUENCE_ID`() =
+    fun `it can open Account 1 with $100 using default lockingPolicy DOMAIN_IDS_HASH (default)`() =
         runTest {
             val appendCondition =
                 AppendCondition(
@@ -135,7 +135,7 @@ class LockingPolicyIT :
 
     @Test
     @Order(5)
-    fun `it can open Account 3 with 0 using CORRELATION_ID as Locking Policy`() =
+    fun `it can open Account 3 with 0 using LAST_SEQUENCE_ID as Locking Policy`() =
         runTest {
             val expectedSequence = 7L
 
@@ -143,7 +143,7 @@ class LockingPolicyIT :
                 AppendCondition(
                     transactionContext = transactionContextAcct3,
                     expectedCurrentSequence = SequenceNumber(0),
-                    lockingPolicy = LockingPolicy.CORRELATION_ID,
+                    lockingPolicy = LockingPolicy.LATEST_SEQUENCE_ID,
                 )
 
             val eventsToAppend =
