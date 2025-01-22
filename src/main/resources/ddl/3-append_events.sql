@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION append_events(
     _expected_sequence_id BIGINT,
     _event_types TEXT[],
     _event_payloads TEXT[],
-    _lock_on_last_event_sequence INT DEFAULT 1 -- less conflicts, concurrency
+    _lock_policy INT DEFAULT 1
 ) RETURNS BIGINT
     LANGUAGE plpgsql
 AS
@@ -47,24 +47,23 @@ BEGIN
         _correlationId := _lastEventCorrelationId; -- Same correlation_id as the last event
 
         -- Adjusted part starts here
-        IF _lock_on_last_event_sequence = 1 THEN
+        IF _lock_policy = 1 THEN
             _isLockAcquired := pg_try_advisory_xact_lock(get_hash(_domain_ids));
-        ELSIF _lock_on_last_event_sequence = 2 THEN
+        ELSIF _lock_policy = 2 THEN
             _isLockAcquired := pg_try_advisory_xact_lock(_lastEventSequenceId);
-        ELSIF _lock_on_last_event_sequence = 3 THEN
+        ELSIF _lock_policy = 3 THEN
             _isLockAcquired := pg_try_advisory_xact_lock(_lastEventCorrelationId);
         END IF;
 
         IF NOT _isLockAcquired THEN
-            IF _lock_on_last_event_sequence = 1 THEN
-                RAISE EXCEPTION 'Failed to acquire lock for _lastEventSequenceId: %', _lastEventSequenceId;
-            ELSIF _lock_on_last_event_sequence = 2 THEN
+            IF _lock_policy = 1 THEN
                 RAISE EXCEPTION 'Failed to acquire lock for _domain_ids: %', _domain_ids;
-            ELSIF _lock_on_last_event_sequence = 3 THEN
+            ELSIF _lock_policy = 2 THEN
+                RAISE EXCEPTION 'Failed to acquire lock for _lastEventSequenceId: %', _lastEventSequenceId;
+            ELSIF _lock_policy = 3 THEN
                 RAISE EXCEPTION 'Failed to acquire lock for _lastEventCorrelationId: %', _lastEventCorrelationId;
             END IF;
         END IF;
-
 
         SELECT ARRAY(SELECT nextval('events_sequence_id_seq') FROM generate_series(1, array_length(_event_payloads, 1)))
         INTO _newSequenceIds;
