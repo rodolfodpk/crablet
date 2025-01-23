@@ -1,13 +1,12 @@
-CREATE OR REPLACE FUNCTION append_events(
-    _domain_ids TEXT[],
-    _expected_sequence_id BIGINT,
-    _event_types TEXT[],
-    _event_payloads TEXT[],
-    _lock_policy INT DEFAULT 1
-) RETURNS BIGINT
+CREATE OR REPLACE PROCEDURE append_events(
+    IN _domain_ids TEXT[],
+    IN _expected_sequence_id BIGINT,
+    IN _event_types TEXT[],
+    IN _event_payloads TEXT[],
+    IN _lock_policy INT
+)
     LANGUAGE plpgsql
-AS
-$$
+AS $$
 DECLARE
     _lastEventSequenceId    BIGINT;
     _lastEventCorrelationId BIGINT;
@@ -19,8 +18,9 @@ DECLARE
     _newSequenceIds         BIGINT[];
 BEGIN
 
-    -- Print current transaction isolation level
-    -- RAISE NOTICE 'Current Transaction Isolation Level: %', current_setting('transaction_isolation');
+    -- SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    RAISE NOTICE 'Current transaction isolation level is: %', current_setting('transaction_isolation');
 
     -- Sort domain ids
     SELECT ARRAY(SELECT UNNEST(_domain_ids) ORDER BY 1) INTO _domain_ids;
@@ -46,7 +46,7 @@ BEGIN
         _causationId := _lastEventSequenceId;
         _correlationId := _lastEventCorrelationId; -- Same correlation_id as the last event
 
-        -- Adjusted part starts here
+        -- Locking mechanism based on _lock_policy
         IF _lock_policy = 1 THEN
             _isLockAcquired := pg_try_advisory_xact_lock(get_hash(_domain_ids));
         ELSIF _lock_policy = 2 THEN
@@ -69,24 +69,29 @@ BEGIN
         INTO _newSequenceIds;
     END IF;
 
-    -- Ensure the provided _base_sequence_id matches the current sequence or is null (allowing the first insert)
+    -- Ensure the provided _expected_sequence_id matches the current sequence or is null (first insert allowed)
     IF _lastEventSequenceId IS NULL OR _lastEventSequenceId = _expected_sequence_id THEN
-        -- Loop through the event payloads
+        -- Loop through the event payloads and insert into the table
         FOR i IN 1 .. array_length(_event_payloads, 1)
             LOOP
                 _currentEventPayload := _event_payloads[i]::json;
                 _currentEventType := _currentEventPayload ->> 'type';
+
                 INSERT INTO events (sequence_id, event_type, event_payload, domain_ids, causation_id, correlation_id)
                 VALUES (_newSequenceIds[i], _currentEventType, _currentEventPayload, _domain_ids,
                         _causationId, _correlationId);
+
                 _causationId := _newSequenceIds[i];
             END LOOP;
     ELSE
         -- Raise an exception if sequence mismatch is detected
-        RAISE EXCEPTION 'Sequence mismatch: the current last sequence % from the database does not match the expected sequence: %.', _lastEventSequenceId, _expected_sequence_id;
+        RAISE EXCEPTION 'Sequence mismatch: the current last sequence % from the database does not match the expected sequence: %.',
+            _lastEventSequenceId, _expected_sequence_id;
     END IF;
 
-    -- Return the sequence of the last event inserted
-    RETURN _causationId;
+--     COMMIT;
+--
+-- EXCEPTION WHEN others THEN
+--     ROLLBACK;
 END;
-$$
+$$;

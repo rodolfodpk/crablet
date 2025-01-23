@@ -47,8 +47,7 @@ class OptimisticLockingErrorIT :
                     JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 50),
                     JsonObject().put("type", "AmountDeposited").put("amount", 50).put("balance", 100),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 3L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
 
             val (state, seq) =
                 stateBuilder.buildFor(

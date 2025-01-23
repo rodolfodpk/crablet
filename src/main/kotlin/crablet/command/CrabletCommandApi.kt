@@ -49,7 +49,7 @@ interface EventsAppender {
     suspend fun appendIf(
         events: List<JsonObject>,
         appendCondition: AppendCondition,
-    ): SequenceNumber
+    )
 }
 
 interface StateBuilder {

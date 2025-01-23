@@ -45,8 +45,8 @@ class CausationCorrelationIdsIT :
                     JsonObject().put("type", "AmountDeposited").put("amount", 20).put("balance", 30),
                     JsonObject().put("type", "AmountDeposited").put("amount", 30).put("balance", 40),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 4L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
+
             val ids = testRepository.getSequences().coAwait()
             val expectedResults =
                 listOf(
@@ -79,8 +79,7 @@ class CausationCorrelationIdsIT :
                     JsonObject().put("type", "AmountDeposited").put("amount", 20).put("balance", 30),
                     JsonObject().put("type", "AmountDeposited").put("amount", 30).put("balance", 40),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 8L
+           eventsAppender.appendIf(eventsToAppend, appendCondition)
             val ids = testRepository.getSequences().coAwait()
             val expectedResults =
                 listOf(

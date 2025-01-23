@@ -92,8 +92,8 @@ class AccountsSingleSinkIT :
                         .put("amount", 50)
                         .put("balance", 100),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 3L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
+            // sequence.value shouldBeExactly 3L
 
             val (state, seq) =
                 stateBuilder.buildFor(
@@ -119,8 +119,8 @@ class AccountsSingleSinkIT :
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 2),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 4L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
+            // sequence.value shouldBeExactly 4L
 
             val (state, seq) =
                 stateBuilder.buildFor(
@@ -128,7 +128,7 @@ class AccountsSingleSinkIT :
                     initialStateFunction = initialStateFunction,
                     onEventFunction = evolveFunction,
                 )
-            seq.value shouldBeExactly sequence.value
+            seq.value shouldBeExactly 4L
             state.id shouldBe 2
             state.balance shouldBeExactly 0
         }
@@ -159,8 +159,8 @@ class AccountsSingleSinkIT :
                         .put("fromAcctBalance", 70)
                         .put("toAcctBalance", 30),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 5L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
+            // sequence.value shouldBeExactly 5L
 
             val (state1, seq1) =
                 stateBuilder.buildFor(
@@ -169,7 +169,7 @@ class AccountsSingleSinkIT :
                     onEventFunction = evolveFunction,
                 )
 
-            seq1.value shouldBeExactly sequence.value
+            seq1.value shouldBeExactly 5L
             state1.id shouldBe 1
             state1.balance shouldBeExactly 70
 
@@ -180,7 +180,7 @@ class AccountsSingleSinkIT :
                     onEventFunction = evolveFunction,
                 )
 
-            seq2.value shouldBeExactly sequence.value
+            seq2.value shouldBeExactly 5L
             state2.id shouldBe 2
             state2.balance shouldBeExactly 30
         }

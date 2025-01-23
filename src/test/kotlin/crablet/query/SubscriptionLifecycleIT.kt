@@ -113,8 +113,7 @@ class SubscriptionLifecycleIT :
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 2),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 1L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
 
             val (state, seq) =
                 stateBuilder.buildFor(
@@ -122,7 +121,7 @@ class SubscriptionLifecycleIT :
                     initialStateFunction = initialStateFunction,
                     onEventFunction = evolveFunction,
                 )
-            seq.value shouldBeExactly sequence.value
+            seq.value shouldBeExactly 1L
             state.id shouldBe 2
             state.balance shouldBeExactly 0
         }

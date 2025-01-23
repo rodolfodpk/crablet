@@ -64,8 +64,7 @@ class AccountTransferScenarioTest :
                         .put("amount", 50)
                         .put("balance", 100),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 3L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
 
             val (state, seq) =
                 stateBuilder.buildFor(
@@ -91,8 +90,7 @@ class AccountTransferScenarioTest :
                 listOf(
                     JsonObject().put("type", "AccountOpened").put("id", 2),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 4L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
 
             val (state, seq) =
                 stateBuilder.buildFor(
@@ -100,7 +98,7 @@ class AccountTransferScenarioTest :
                     initialStateFunction = initialStateFunction,
                     onEventFunction = evolveFunction,
                 )
-            seq.value shouldBeExactly sequence.value
+            seq.value shouldBeExactly 4L
             state.id shouldBe 2
             state.balance shouldBeExactly 0
         }
@@ -131,8 +129,7 @@ class AccountTransferScenarioTest :
                         .put("fromAcctBalance", 70)
                         .put("toAcctBalance", 30),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 5L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
 
             val (state1, seq1) =
                 stateBuilder.buildFor(
@@ -141,7 +138,7 @@ class AccountTransferScenarioTest :
                     onEventFunction = evolveFunction,
                 )
 
-            seq1.value shouldBeExactly sequence.value
+            seq1.value shouldBeExactly 5L
             state1.id shouldBe 1
             state1.balance shouldBeExactly 70
 
@@ -152,7 +149,7 @@ class AccountTransferScenarioTest :
                     onEventFunction = evolveFunction,
                 )
 
-            seq2.value shouldBeExactly sequence.value
+            seq2.value shouldBeExactly 5L
             state2.id shouldBe 2
             state2.balance shouldBeExactly 30
         }
@@ -183,8 +180,7 @@ class AccountTransferScenarioTest :
                         .put("fromAcctBalance", 20)
                         .put("toAcctBalance", 80),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 6L
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
 
             val (state1, seq1) =
                 stateBuilder.buildFor(
@@ -193,7 +189,7 @@ class AccountTransferScenarioTest :
                     onEventFunction = evolveFunction,
                 )
 
-            seq1.value shouldBeExactly sequence.value
+            seq1.value shouldBeExactly 6L
             state1.id shouldBe 1
             state1.balance shouldBeExactly 80
 
@@ -204,7 +200,7 @@ class AccountTransferScenarioTest :
                     onEventFunction = evolveFunction,
                 )
 
-            seq2.value shouldBeExactly sequence.value
+            seq2.value shouldBeExactly 6L
             state2.id shouldBe 2
             state2.balance shouldBeExactly 20
         }
@@ -235,8 +231,8 @@ class AccountTransferScenarioTest :
                         .put("fromAcctBalance", 19)
                         .put("toAcctBalance", 81),
                 )
-            val sequence = eventsAppender.appendIf(eventsToAppend, appendCondition)
-            sequence.value shouldBeExactly 7L
+
+            eventsAppender.appendIf(eventsToAppend, appendCondition)
 
             val (state1, seq1) =
                 stateBuilder.buildFor(
@@ -245,7 +241,7 @@ class AccountTransferScenarioTest :
                     onEventFunction = evolveFunction,
                 )
 
-            seq1.value shouldBeExactly sequence.value
+            seq1.value shouldBeExactly 7L
             state1.id shouldBe 1
             state1.balance shouldBeExactly 81
 
@@ -256,7 +252,7 @@ class AccountTransferScenarioTest :
                     onEventFunction = evolveFunction,
                 )
 
-            seq2.value shouldBeExactly sequence.value
+            seq2.value shouldBeExactly 7L
             state2.id shouldBe 2
             state2.balance shouldBeExactly 19
         }
