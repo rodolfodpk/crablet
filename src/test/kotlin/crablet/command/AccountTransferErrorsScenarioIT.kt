@@ -20,7 +20,7 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.MethodOrderer
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
-class AccountTransferEdgeScenariosIT :
+class AccountTransferErrorsScenarioIT :
     AbstractCrabletTest(),
     TestAccountsContext {
 
