@@ -1,5 +1,3 @@
-## A basic GitHub Actions workflow for your Quarkus application.
-
 name: CI build
 
 on:
@@ -21,3 +19,7 @@ jobs:
           cache: maven
       - name: Build
         run: ./mvnw verify -B
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: false
